@@ -1,0 +1,7 @@
+*.o
+benchmark-blas
+benchmark-blocked
+benchmark-naive
+*.o*
+.svn
+
