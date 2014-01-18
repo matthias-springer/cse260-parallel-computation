@@ -67,7 +67,7 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
 void square_dgemm (int lda, double* A, double* B, double* C)
 {
 	// will always be BLOCK_SIZE, but the compiler is weired
-	register int BLOCK_SIZE_REGISTER = min(lda, BLOCK_SIZE);
+	register int BLOCK_SIZE_REGISTER = min(lda >> 5, BLOCK_SIZE);
 	int fringe_start = lda / BLOCK_SIZE_REGISTER * BLOCK_SIZE_REGISTER;
 
   /* For each block-row of A */ 
@@ -78,6 +78,9 @@ void square_dgemm (int lda, double* A, double* B, double* C)
       for (int k = 0; k < fringe_start; k += BLOCK_SIZE_REGISTER)
       {
 				do_block_unrolled(lda, BLOCK_SIZE_REGISTER, A + i*lda + k, B + k*lda + j, C + i*lda + j);
+				//do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER, BLOCK_SIZE_REGISTER, BLOCK_SIZE_REGISTER);
+				//do_block_not_unrolled(i, j, k, min(lda-i, BLOCK_SIZE_REGISTER), min(lda-j, BLOCK_SIZE_REGISTER), min(lda-k, BLOCK_SIZE_REGISTER));
+
       }
 
 	/* For the fringe cases */
@@ -137,7 +140,7 @@ void square_dgemm (int lda, double* A, double* B, double* C)
     int k = fringe_start;
     for (int j = 0; j < fringe_start; j += BLOCK_SIZE_REGISTER)
     {
-      do_block_not_unrolled(i, j, k, lda - i, BLOCK_SIZE_REGISTER, lda - j);
+      do_block_not_unrolled(i, j, k, lda - i, BLOCK_SIZE_REGISTER, lda - k);
     }
   }
 
