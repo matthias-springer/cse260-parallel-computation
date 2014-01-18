@@ -6,6 +6,9 @@
  *    Support CBLAS interface
  */
 
+#include <emmintrin.h>
+
+
 const char* dgemm_desc = "Simple blocked dgemm.";
 
 #if !defined(BLOCK_SIZE)
@@ -35,8 +38,18 @@ static void do_block (int lda, int M, int N, int K, double* A, double* B, double
     }
 }
 
+double* B_transposed;
 static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, double* B, double* C)
 {
+	// transpose matrix B
+	for (int k = 0; k < BLOCK_SIZE_REGISTER; k++)
+	{
+		for (int j = 0; j < BLOCK_SIZE_REGISTER; j++)
+		{
+			B_transposed[BLOCK_SIZE_REGISTER*j+k] = B[k*lda+j];
+		}
+	}
+	
   /* For each row i of A */
   for (int i = 0; i < BLOCK_SIZE_REGISTER; ++i)
     /* For each column j of B */
@@ -46,14 +59,31 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
       double cij = C[i*lda+j];
       for (int k = 0; k < BLOCK_SIZE_REGISTER; k += 4) {
 				int index_A = i*lda + k;
-				int index_B = k*lda + j;
+				int index_B = j*BLOCK_SIZE_REGISTER + k;
+			
+				__m128d a1 = _mm_loadu_pd(A + index_A);
+				__m128d a2 = _mm_loadu_pd(A + index_A + 2);
+        __m128d b1 = _mm_loadu_pd(B + index_B);
+        __m128d b2 = _mm_loadu_pd(B + index_B + 2);
+				
+				//__m128d d1 = _mm_mul_pd(a1, b1);
+				//__m128d d2 = _mm_mul_pd(a2, b2);
 
-				double cij1 = A[index_A] * B[index_B];
-				double cij2 = A[index_A + 1] * B[index_B + lda];
-				double cij3 = A[index_A + 2] * B[index_B + 2*lda];
-				double cij4 = A[index_A + 3] * B[index_B + 3*lda];
+				__m128d c = _mm_add_pd(_mm_mul_pd(a1, b1), _mm_mul_pd(a2, b2));
 
-			  cij += cij1 + cij2 + cij3 + cij4;	 //+ cij5 + cij6; // cij6 + cij7 + cij8;
+				double c1;
+				double c2;
+
+				_mm_storeh_pd(&c1, c);
+				_mm_storel_pd(&c2, c);
+				
+				//double cij1 = A[index_A] * B_transposed[index_B];
+				//double cij2 = A[index_A + 1] * B_transposed[index_B + 1];
+				//double cij3 = A[index_A + 2] * B_transposed[index_B + 2];
+				//double cij4 = A[index_A + 3] * B_transposed[index_B + 3];
+				//double cres = 
+			  //cij += cij1 + cij2 + cij3 + cij4;	 //+ cij5 + cij6; // cij6 + cij7 + cij8;
+			  cij += c1 + c2;
 			}
 
       C[i*lda+j] = cij;
@@ -67,8 +97,10 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
 void square_dgemm (int lda, double* A, double* B, double* C)
 {
 	// will always be BLOCK_SIZE, but the compiler is weired
-	register int BLOCK_SIZE_REGISTER = min(lda >> 5, BLOCK_SIZE);
+	register int BLOCK_SIZE_REGISTER = min(lda * 100000, BLOCK_SIZE);
 	int fringe_start = lda / BLOCK_SIZE_REGISTER * BLOCK_SIZE_REGISTER;
+
+	B_transposed = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER*BLOCK_SIZE_REGISTER);
 
   /* For each block-row of A */ 
   for (int i = 0; i < fringe_start; i += BLOCK_SIZE_REGISTER)
