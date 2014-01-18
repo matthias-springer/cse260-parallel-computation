@@ -14,6 +14,10 @@
 #include <math.h>   // For: fabs
 
 #include "cblas.h"
+
+#define DO_EXPAND(VAL)  VAL ## 1
+#define EXPAND(VAL)     DO_EXPAND(VAL)
+
 void cmdLine(int argc, char *argv[], int* n);
 /* reference_dgemm wraps a call to the BLAS-3 routine DGEMM, via the standard FORTRAN interface - hence the reference semantics. */ 
 void reference_dgemm (int N, double Alpha, double* A, double* B, double* C)
@@ -57,6 +61,11 @@ void absolute_value (double *p, int n)
 int main (int argc, char **argv)
 {
   printf ("Description:\t%s\n\n", dgemm_desc);
+
+#if VALIDATION==1
+	printf("RUNNING WITH VALIDATION OF ALGORITHM\n");
+#endif
+
   /* We can pick just one size with the -n flag */
   int n0;
   cmdLine(argc,argv,&n0);
@@ -114,6 +123,9 @@ int main (int argc, char **argv)
     double* A = buf + 0;
     double* B = A + nmax*nmax;
     double* C = B + nmax*nmax;
+#if VALIDATION==1
+		double* D = (double*) malloc(nmax*nmax*sizeof(double));
+#endif
 
     fill (A, n*n);
     fill (B, n*n);
@@ -132,12 +144,38 @@ int main (int argc, char **argv)
       /* Benchmark n_iterations runs of square_dgemm */
       seconds = -wall_time();
       for (int it = 0; it < n_iterations; ++it)
-	square_dgemm (n, A, B, C);
+				square_dgemm (n, A, B, C);
       seconds += wall_time();
+
+#if VALIDATION==1
+			// check correctness of the algorithm
+      {
+				memset(C, '\0', nmax*nmax);
+				square_dgemm(n, A, B, C);
+
+        memset(D, '\0', nmax*nmax);
+
+        for (int i = 0; i < n; i++) {
+          for (int j = 0; j < n; j++) {
+            double cij = D[i*n+j];
+            for (int k = 0; k < n; k++)
+              cij += A[i*n+k] * B[k*n+j];
+            D[i*n+j] = cij;
+          }
+        }
+
+        for (int i = 0; i < n; i++)
+          for (int j = 0; j < n; j++)
+            if ((D[i*n+j] - C[i*n+j]) * (D[i*n+j] - C[i*n+j]) > 0.01) {
+              printf("ERROR in algorithm! Expected %d but saw %d\n", D[i*n+j], C[i*n+j]);
+							exit(1);
+						}
+      }
+#endif
 
       /*  compute Mflop/s rate */
       Gflops_s = 2.e-9 * n_iterations * n * n * n / seconds;
-    }
+    } 
     printf ("Size: %d\tGflop/s: %.3g\n", n, Gflops_s);
 
     /* Ensure that error does not exceed the theoretical error bound. */
