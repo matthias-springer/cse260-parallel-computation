@@ -48,6 +48,7 @@ ifeq ($(NO_BLAS), 1)
     CFLAGS += -DNO_BLAS
 endif
 
+CFLAGS += -DVALIDATION=$(VALIDATION)
 
 #DEBUG += -DDEBUG
 
