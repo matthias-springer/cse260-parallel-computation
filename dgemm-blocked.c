@@ -12,8 +12,14 @@
 const char* dgemm_desc = "Simple blocked dgemm.";
 
 #if !defined(BLOCK_SIZE)
-#define BLOCK_SIZE 32
+//#define BLOCK_SIZE 32
 #endif
+
+int BLOCK_SIZE = 32;
+
+int BLOCK_SIZE_I = 16;
+int BLOCK_SIZE_J = 32;
+int BLOCK_SIZE_K = 32;
 
 #define min(a,b) (((a)<(b))?(a):(b))
 
@@ -48,22 +54,22 @@ static void do_block (int lda, int M, int N, int K, double* A, double* B, double
 
 double* A_buffered;
 double* B_transposed;
-static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, double* B, double* C)
+static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER_I, int BLOCK_SIZE_REGISTER_J, int BLOCK_SIZE_REGISTER_K, double* A, double* B, double* C)
 {
 	// transpose matrix B
-	for (int k = 0; k < BLOCK_SIZE_REGISTER; k++)
+	for (int k = 0; k < BLOCK_SIZE_REGISTER_K; k++)
 	{
-		for (int j = 0; j < BLOCK_SIZE_REGISTER; j++)
+		for (int j = 0; j < BLOCK_SIZE_REGISTER_J; j++)
 		{
-			B_transposed[BLOCK_SIZE_REGISTER*j+k] = B[k*lda+j];
+			B_transposed[BLOCK_SIZE_REGISTER_K*j+k] = B[k*lda+j];
 		}
 	}
 
 #ifdef BUFFER_A
 	// buffer matrix A
-	for (int i = 0; i < BLOCK_SIZE_REGISTER; i++) {
-		for (int k = 0; k < BLOCK_SIZE_REGISTER; k++) {
-			A_buffered[i*BLOCK_SIZE_REGISTER + k] = A[i*lda + k];
+	for (int i = 0; i < BLOCK_SIZE_REGISTER_I; i++) {
+		for (int k = 0; k < BLOCK_SIZE_REGISTER_K; k++) {
+			A_buffered[i*BLOCK_SIZE_REGISTER_K + k] = A[i*lda + k];
 		}
 	}
 #endif
@@ -73,17 +79,17 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
 	
   /* For each row i of A */
 #ifdef INNER_DOBLOCK_LOOP
-  for (int i = 0; i < BLOCK_SIZE_REGISTER; i += MU)
+  for (int i = 0; i < BLOCK_SIZE_REGISTER_I; i += MU)
 #endif
 #ifndef INNER_DOBLOCK_LOOP
-	for (int i = 0; i < BLOCK_SIZE_REGISTER; ++i)
+	for (int i = 0; i < BLOCK_SIZE_REGISTER_I; ++i)
 #endif
     /* For each column j of B */
 #ifdef INNER_DOBLOCK_LOOP
-    for (int j = 0; j < BLOCK_SIZE_REGISTER; j += NU)
+    for (int j = 0; j < BLOCK_SIZE_REGISTER_J; j += NU)
 #endif
 #ifndef INNER_DOBLOCK_LOOP
-		for (int j = 0; j < BLOCK_SIZE_REGISTER; ++j)
+		for (int j = 0; j < BLOCK_SIZE_REGISTER_J; ++j)
 #endif
     {
       /* Compute C(i,j) */
@@ -92,10 +98,10 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
 #endif
 
 #ifdef INNER_DOBLOCK_LOOP
-      for (int k = 0; k < BLOCK_SIZE_REGISTER; k += KU) {
+      for (int k = 0; k < BLOCK_SIZE_REGISTER_K; k += KU) {
 #endif
 #ifndef INNER_DOBLOCK_LOOP
-			for (int k = 0; k < BLOCK_SIZE_REGISTER; k += 8) {
+			for (int k = 0; k < BLOCK_SIZE_REGISTER_K; k += 8) {
 #endif
 #ifdef INNER_DOBLOCK_LOOP
 
@@ -131,8 +137,8 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
 #endif
 
 #ifndef INNER_DOBLOCK_LOOP
-				int index_A = i*BLOCK_SIZE_REGISTER + k;
-				int index_B = j*BLOCK_SIZE_REGISTER + k;
+				int index_A = i*BLOCK_SIZE_REGISTER_K + k;
+				int index_B = j*BLOCK_SIZE_REGISTER_K + k;
 			
 				__m128d a1 = _mm_load_pd(A_buffered + index_A);
 				__m128d a2 = _mm_load_pd(A_buffered + index_A + 2);
@@ -153,21 +159,7 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
 				__m128d c2 = _mm_add_pd(d3, d4);
 				__m128d c3 = _mm_add_pd(c1, c2);
 				
-/*
-				double cij1 = A[index_A] * B_transposed[index_B];
-			  double cij2 = A[index_A + 1] * B_transposed[index_B + 1];
-				double cij3 = A[index_A + 2] * B_transposed[index_B + 2];
-				double cij4 = A[index_A + 3] * B_transposed[index_B + 3];
-				//double cres = 
-
-			  cij += cij1 + cij2 + cij3 + cij4;	 //+ cij5 + cij6; // cij6 + cij7 + cij8;
-//			  cij += c_d_1 + c_d_2;
-*/
-
-					cij += _mm_cvtsd_f64(c3);
-					__m128d c4 = _mm_unpackhi_pd(c3, c1);
-					cij += _mm_cvtsd_f64(c4);
-
+				cij += _mm_cvtsd_f64(c3) + _mm_cvtsd_f64(_mm_unpackhi_pd(c3, c3));
 #endif
 
 			}
@@ -185,22 +177,32 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER, double* A, doub
  * On exit, A and B maintain their input values. */  
 void square_dgemm (int lda, double* A, double* B, double* C)
 {
-	// will always be BLOCK_SIZE, but the compiler is weired
-	register int BLOCK_SIZE_REGISTER = min(lda * 100000, BLOCK_SIZE);
-	int fringe_start = lda / BLOCK_SIZE_REGISTER * BLOCK_SIZE_REGISTER;
+		BLOCK_SIZE_K = min(lda/8*8, 128);
+		BLOCK_SIZE_I = BLOCK_SIZE_J =  (1024 / 2 / BLOCK_SIZE_K) / 8 * 8;
 
-	B_transposed = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER*BLOCK_SIZE_REGISTER);
-	A_buffered = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER*BLOCK_SIZE_REGISTER);
+//	printf("  BLOCK_SIZE_I: %i, BLOCK_SIZE_J: %i, BLOCK_SIZE_K: %i\n", BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K);
+
+	// will always be BLOCK_SIZE, but the compiler is weired
+	register int BLOCK_SIZE_REGISTER_I = min(lda * 100000, BLOCK_SIZE_I);
+	register int BLOCK_SIZE_REGISTER_J = min(lda * 100000, BLOCK_SIZE_J);
+	register int BLOCK_SIZE_REGISTER_K = min(lda * 100000, BLOCK_SIZE_K);
+
+	int fringe_start_i = lda / BLOCK_SIZE_REGISTER_I * BLOCK_SIZE_REGISTER_I;
+	int fringe_start_j = lda / BLOCK_SIZE_REGISTER_J * BLOCK_SIZE_REGISTER_J;
+	int fringe_start_k = lda / BLOCK_SIZE_REGISTER_K * BLOCK_SIZE_REGISTER_K;
+
+	B_transposed = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER_K*BLOCK_SIZE_REGISTER_J);
+	A_buffered = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER_K*BLOCK_SIZE_REGISTER_I);
 
   /* For each block-row of A */ 
-  for (int i = 0; i < fringe_start; i += BLOCK_SIZE_REGISTER)
+  for (int i = 0; i < fringe_start_i; i += BLOCK_SIZE_REGISTER_I)
     /* For each block-column of B */
-    for (int j = 0; j < fringe_start; j += BLOCK_SIZE_REGISTER)
+    for (int j = 0; j < fringe_start_j; j += BLOCK_SIZE_REGISTER_J)
       /* Accumulate block dgemms into block of C */
-      for (int k = 0; k < fringe_start; k += BLOCK_SIZE_REGISTER)
+      for (int k = 0; k < fringe_start_k; k += BLOCK_SIZE_REGISTER_K)
       {
-				do_block_unrolled(lda, BLOCK_SIZE_REGISTER, A + i*lda + k, B + k*lda + j, C + i*lda + j);
-				//do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER, BLOCK_SIZE_REGISTER, BLOCK_SIZE_REGISTER);
+				do_block_unrolled(lda, BLOCK_SIZE_REGISTER_I, BLOCK_SIZE_REGISTER_J, BLOCK_SIZE_REGISTER_K, A + i*lda + k, B + k*lda + j, C + i*lda + j);
+				//do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER_I, BLOCK_SIZE_REGISTER_J, BLOCK_SIZE_REGISTER_K);
 				//do_block_not_unrolled(i, j, k, min(lda-i, BLOCK_SIZE_REGISTER), min(lda-j, BLOCK_SIZE_REGISTER), min(lda-k, BLOCK_SIZE_REGISTER));
 
       }
@@ -208,71 +210,73 @@ void square_dgemm (int lda, double* A, double* B, double* C)
 	/* For the fringe cases */
 	// {i}
 	{
-		int i = fringe_start;
-		for (int j = 0; j < fringe_start; j += BLOCK_SIZE_REGISTER)
-			for (int k = 0; k < fringe_start; k += BLOCK_SIZE_REGISTER) 
+		int i = fringe_start_i;
+		for (int j = 0; j < fringe_start_j; j += BLOCK_SIZE_REGISTER_J)
+			for (int k = 0; k < fringe_start_k; k += BLOCK_SIZE_REGISTER_K) 
 			{
-				do_block_not_unrolled(i, j, k, lda - i, BLOCK_SIZE_REGISTER, BLOCK_SIZE_REGISTER);
+				do_block_not_unrolled(i, j, k, lda - i, BLOCK_SIZE_REGISTER_J, BLOCK_SIZE_REGISTER_K);
 			}
 	}
 
 	// {j}
   {
-    int j = fringe_start;
-    for (int i = 0; i < fringe_start; i += BLOCK_SIZE_REGISTER)
-      for (int k = 0; k < fringe_start; k += BLOCK_SIZE_REGISTER)
+    int j = fringe_start_j;
+    for (int i = 0; i < fringe_start_i; i += BLOCK_SIZE_REGISTER_I)
+      for (int k = 0; k < fringe_start_k; k += BLOCK_SIZE_REGISTER_K)
       {
-				do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER, lda - j, BLOCK_SIZE_REGISTER);
+				do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER_I, lda - j, BLOCK_SIZE_REGISTER_K);
       }
   }
 
 	// {k}
   {
-    int k = fringe_start;
-    for (int i = 0; i < fringe_start; i += BLOCK_SIZE_REGISTER)
-      for (int j = 0; j < fringe_start; j += BLOCK_SIZE_REGISTER)
+    int k = fringe_start_k;
+    for (int i = 0; i < fringe_start_i; i += BLOCK_SIZE_REGISTER_I)
+      for (int j = 0; j < fringe_start_j; j += BLOCK_SIZE_REGISTER_J)
       {
-				do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER, BLOCK_SIZE_REGISTER, lda - k);
+				do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER_I, BLOCK_SIZE_REGISTER_J, lda - k);
       }
   }
 
 	// {i, j}
 	{
-		int i = fringe_start;
-		int j = fringe_start;
-		for (int k = 0; k < fringe_start; k += BLOCK_SIZE_REGISTER) 
+		int i = fringe_start_i;
+		int j = fringe_start_j;
+		for (int k = 0; k < fringe_start_k; k += BLOCK_SIZE_REGISTER_K) 
 		{
-			do_block_not_unrolled(i, j, k, lda - i, lda - j, BLOCK_SIZE_REGISTER);
+			do_block_not_unrolled(i, j, k, lda - i, lda - j, BLOCK_SIZE_REGISTER_K);
 		}
 	}
 
 	// {j, k}
   {
-    int j = fringe_start;
-    int k = fringe_start;
-    for (int i = 0; i < fringe_start; i += BLOCK_SIZE_REGISTER) 
+    int j = fringe_start_j;
+    int k = fringe_start_k;
+    for (int i = 0; i < fringe_start_i; i += BLOCK_SIZE_REGISTER_I) 
     {
-      do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER, lda - j, lda - k);
+      do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER_I, lda - j, lda - k);
     }
   }
 
 	// {i, k}
   {
-    int i = fringe_start;
-    int k = fringe_start;
-    for (int j = 0; j < fringe_start; j += BLOCK_SIZE_REGISTER)
+    int i = fringe_start_i;
+    int k = fringe_start_k;
+    for (int j = 0; j < fringe_start_j; j += BLOCK_SIZE_REGISTER_J)
     {
-      do_block_not_unrolled(i, j, k, lda - i, BLOCK_SIZE_REGISTER, lda - k);
+      do_block_not_unrolled(i, j, k, lda - i, BLOCK_SIZE_REGISTER_J, lda - k);
     }
   }
 
 	// {i, j, k}
 	{
-		int i = fringe_start;
-		int j = fringe_start;
-		int k = fringe_start;
+		int i = fringe_start_i;
+		int j = fringe_start_j;
+		int k = fringe_start_k;
 
 		do_block_not_unrolled(i, j, k, lda - i, lda - j, lda - k);
 	}
 
+	free(B_transposed);
+	free(A_buffered);
 }
