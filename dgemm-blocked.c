@@ -6,7 +6,6 @@
  *    Support CBLAS interface
  */
 
-#include <pmmintrin.h>
 #include <emmintrin.h>
 #include <malloc.h>
 
@@ -50,16 +49,16 @@ double B_global_transpose[800*800*sizeof(double)] __attribute__((aligned(16)));
 static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j##_##block_size_k(int lda, double* restrict A, double* restrict B, double* restrict C) \
 { \
 	for (int i = 0; i < (block_size_i); ++i) \
+	{ \
+		register int index_A = i*(lda + (odd_increment)); \
+		register int index_C = i*lda; \
+		\
 		for (int j = 0; j < (block_size_j); ++j) \
     { \
-      double cij = C[i*lda+j]; \
-			register int index_A = i*(lda + (odd_increment)); \ 
+      __m128d cij = _mm_setzero_pd(); \
 			register int index_B = j*(lda + (odd_increment)); \
  \
 			for (int k = 0; k < (block_size_k); k += 8) { \
-				/* int index_A = i*(lda + (odd_increment)) + k;  \
-				 int index_B = j*(lda + (odd_increment)) + k; */  \
- \
 				__m128d a1 = _mm_load_pd(A + index_A); \
 				index_A += 2; \
 				__m128d a2 = _mm_load_pd(A + index_A); \
@@ -67,6 +66,7 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
         __m128d a3 = _mm_load_pd(A + index_A); \
 				index_A += 2; \
         __m128d a4 = _mm_load_pd(A + index_A); \
+        index_A += 2; \
  \
         __m128d b1 = _mm_load_pd(B + index_B); \
 				index_B += 2; \
@@ -75,26 +75,27 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
         __m128d b3 = _mm_load_pd(B + index_B); \
 				index_B += 2; \
         __m128d b4 = _mm_load_pd(B + index_B); \
- \
 				index_B += 2; \
-				__m128d d1 = _mm_mul_pd(a1, b1); \
-				index_A += 2; \
-				__m128d d2 = _mm_mul_pd(a2, b2); \
  \
-        __m128d d3 = _mm_mul_pd(a3, b3); \
-        __m128d d4 = _mm_mul_pd(a4, b4); \
+				a1 = _mm_mul_pd(a1, b1); \
+				a2 = _mm_mul_pd(a2, b2); \
  \
-				__m128d c1 = _mm_add_pd(d1, d2); \
-				__m128d c2 = _mm_add_pd(d3, d4); \
-				__m128d c3 = _mm_add_pd(c1, c2); \
-				__m128d c4 = _mm_unpackhi_pd(c3, c3); \
+        a3 = _mm_mul_pd(a3, b3); \
+        a4 = _mm_mul_pd(a4, b4); \
  \
-				cij += _mm_cvtsd_f64(c3); \
-				cij += _mm_cvtsd_f64(c4); \
+				a1 = _mm_add_pd(a1, a2); \
+				a3 = _mm_add_pd(a3, a4); \
+				a3 = _mm_add_pd(a1, a3); \
+ \
+				cij = _mm_add_pd(cij, a3); \ 
 			} \
  \
-			C[i*lda+j] = cij; \
+			__m128d cij2 = _mm_unpackhi_pd(cij, cij); \
+			C[index_C] += _mm_cvtsd_f64(cij) + _mm_cvtsd_f64(cij2); \
+			index_A -= (block_size_k); \
+			index_C++; \
 		} \
+	} \
 }
 
 #define DO_BLOCK_UNROLLED_EXPAND(odd_increment, block_size_i, block_size_j, block_size_k) DO_BLOCK_UNROLLED_HELPER(odd_increment, block_size_i, block_size_j, block_size_k)
