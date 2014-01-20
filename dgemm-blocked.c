@@ -13,7 +13,7 @@ const char* dgemm_desc = "Simple blocked dgemm.";
 
 #define BLOCK_SIZE_I 32
 #define BLOCK_SIZE_J 32
-#define BLOCK_SIZE_K 32
+#define BLOCK_SIZE_K 36
 
 #define min(a,b) (((a)<(b))?(a):(b))
 
@@ -58,7 +58,7 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
       __m128d cij = _mm_setzero_pd(); \
 			register int index_B = j*(lda + (odd_increment)); \
  \
-			for (int k = 0; k < (block_size_k); k += 8) { \
+			for (int k = 0; k < (block_size_k); k += 12) { \
 				__m128d a1 = _mm_load_pd(A + index_A); \
 				index_A += 2; \
 				__m128d a2 = _mm_load_pd(A + index_A); \
@@ -66,6 +66,10 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
         __m128d a3 = _mm_load_pd(A + index_A); \
 				index_A += 2; \
         __m128d a4 = _mm_load_pd(A + index_A); \
+        index_A += 2; \
+        __m128d a5 = _mm_load_pd(A + index_A); \
+        index_A += 2; \
+        __m128d a6 = _mm_load_pd(A + index_A); \
         index_A += 2; \
  \
         __m128d b1 = _mm_load_pd(B + index_B); \
@@ -76,16 +80,23 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
 				index_B += 2; \
         __m128d b4 = _mm_load_pd(B + index_B); \
 				index_B += 2; \
+        __m128d b5 = _mm_load_pd(B + index_B); \
+        index_B += 2; \
+        __m128d b6 = _mm_load_pd(B + index_B); \
+        index_B += 2; \
  \
 				a1 = _mm_mul_pd(a1, b1); \
 				a2 = _mm_mul_pd(a2, b2); \
- \
         a3 = _mm_mul_pd(a3, b3); \
         a4 = _mm_mul_pd(a4, b4); \
+				a5 = _mm_mul_pd(a5, b5); \
+				a6 = _mm_mul_pd(a6, b6); \
  \
 				a1 = _mm_add_pd(a1, a2); \
 				a3 = _mm_add_pd(a3, a4); \
+				a5 = _mm_add_pd(a5, a6); \
 				a3 = _mm_add_pd(a1, a3); \
+				a3 = _mm_add_pd(a3, a5); \
  \
 				cij = _mm_add_pd(cij, a3); \ 
 			} \
