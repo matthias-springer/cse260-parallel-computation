@@ -132,6 +132,8 @@ int main (int argc, char **argv)
     /* Create and fill 3 random matrices A,B,C*/
     int n = test_sizes[isize];
 
+		if (n%2 != 0) continue;
+
     double* A = buf + 0;
     double* B = A + nmax*nmax;
     double* C = B + nmax*nmax;

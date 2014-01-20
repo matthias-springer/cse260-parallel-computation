@@ -49,6 +49,7 @@ ifeq ($(NO_BLAS), 1)
 endif
 
 CFLAGS += -DVALIDATION=$(VALIDATION) -O3 -msse -msse2 -msse3 -m3dnow -mfpmath=sse -pg
+#CFLAGS += -DVALIDATION=$(VALIDATION) -g -O0
 
 #DEBUG += -DDEBUG
 
