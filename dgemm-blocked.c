@@ -6,20 +6,15 @@
  *    Support CBLAS interface
  */
 
+#include <pmmintrin.h>
 #include <emmintrin.h>
 #include <malloc.h>
 
 const char* dgemm_desc = "Simple blocked dgemm.";
 
-#if !defined(BLOCK_SIZE)
-//#define BLOCK_SIZE 32
-#endif
-
-int BLOCK_SIZE = 32;
-
-int BLOCK_SIZE_I = 16;
-int BLOCK_SIZE_J = 32;
-int BLOCK_SIZE_K = 32;
+#define BLOCK_SIZE_I 32
+#define BLOCK_SIZE_J 32
+#define BLOCK_SIZE_K 32
 
 #define min(a,b) (((a)<(b))?(a):(b))
 
@@ -49,55 +44,73 @@ DO_BLOCK_EXPAND(0)
 DO_BLOCK_EXPAND(1)
 
 double A_buffered[32*800*sizeof(double)] __attribute__((aligned(16)));
-double B_transposed[32*32*sizeof(double)] __attribute__((aligned(16)));
 double B_global_transpose[800*800*sizeof(double)] __attribute__((aligned(16)));
 
-#define DO_BLOCK_UNROLLED_EXPAND(odd_increment, block_size_i, block_size_j, block_size_k) \
+#define DO_BLOCK_UNROLLED_HELPER(odd_increment, block_size_i, block_size_j, block_size_k) \
 static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j##_##block_size_k(int lda, double* restrict A, double* restrict B, double* restrict C) \
 { \
 	for (int i = 0; i < (block_size_i); ++i) \
 		for (int j = 0; j < (block_size_j); ++j) \
     { \
       double cij = C[i*lda+j]; \
+			register int index_A = i*(lda + (odd_increment)); \ 
+			register int index_B = j*(lda + (odd_increment)); \
  \
 			for (int k = 0; k < (block_size_k); k += 8) { \
-				int index_A = i*(lda + (odd_increment)) + k; \
-				int index_B = j*(lda + (odd_increment)) + k; \
+				/* int index_A = i*(lda + (odd_increment)) + k;  \
+				 int index_B = j*(lda + (odd_increment)) + k; */  \
  \
 				__m128d a1 = _mm_load_pd(A + index_A); \
-				__m128d a2 = _mm_load_pd(A + index_A + 2); \
-        __m128d a3 = _mm_load_pd(A + index_A + 4); \
-        __m128d a4 = _mm_load_pd(A + index_A + 6); \
+				index_A += 2; \
+				__m128d a2 = _mm_load_pd(A + index_A); \
+				index_A += 2; \
+        __m128d a3 = _mm_load_pd(A + index_A); \
+				index_A += 2; \
+        __m128d a4 = _mm_load_pd(A + index_A); \
  \
         __m128d b1 = _mm_load_pd(B + index_B); \
-        __m128d b2 = _mm_load_pd(B + index_B + 2); \
-        __m128d b3 = _mm_load_pd(B + index_B + 4); \
-        __m128d b4 = _mm_load_pd(B + index_B + 6); \
+				index_B += 2; \
+        __m128d b2 = _mm_load_pd(B + index_B); \
+				index_B += 2; \
+        __m128d b3 = _mm_load_pd(B + index_B); \
+				index_B += 2; \
+        __m128d b4 = _mm_load_pd(B + index_B); \
  \
 				__m128d d1 = _mm_mul_pd(a1, b1); \
 				__m128d d2 = _mm_mul_pd(a2, b2); \
         __m128d d3 = _mm_mul_pd(a3, b3); \
         __m128d d4 = _mm_mul_pd(a4, b4); \
+				index_A += 2; \
  \
 				__m128d c1 = _mm_add_pd(d1, d2); \
 				__m128d c2 = _mm_add_pd(d3, d4); \
 				__m128d c3 = _mm_add_pd(c1, c2); \
+				__m128d c4 = _mm_unpackhi_pd(c3, c3); \
  \
-				cij += _mm_cvtsd_f64(c3) + _mm_cvtsd_f64(_mm_unpackhi_pd(c3, c3)); \
+				index_B += 2; \
+ \
+				cij += _mm_cvtsd_f64(c3); \
+				cij += _mm_cvtsd_f64(c4); \
 			} \
  \
 			C[i*lda+j] = cij; \
 		} \
 }
 
-DO_BLOCK_UNROLLED_EXPAND(0, 32, 32, 32)
-DO_BLOCK_UNROLLED_EXPAND(1, 32, 32, 32)
+#define DO_BLOCK_UNROLLED_EXPAND(odd_increment, block_size_i, block_size_j, block_size_k) DO_BLOCK_UNROLLED_HELPER(odd_increment, block_size_i, block_size_j, block_size_k)
+
+DO_BLOCK_UNROLLED_EXPAND(0, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)
+DO_BLOCK_UNROLLED_EXPAND(1, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)
+
+#define SQUARE_DGEMM_CALL_HELPER(odd_increment, block_size_i, block_size_j, block_size_k) square_dgemm_##odd_increment##_##block_size_i##_##block_size_j##_##block_size_k
+
+#define SQUARE_DGEMM(odd_increment, block_size_i, block_size_j, block_size_k) SQUARE_DGEMM_CALL_HELPER(odd_increment, block_size_i, block_size_j, block_size_k)
 
 /* This routine performs a dgemm operation
  *  C := C + A * B
  * where A, B, and C are lda-by-lda matrices stored in row-major order
  * On exit, A and B maintain their input values. */ 
-#define SQUARE_DGEMM_EXPAND(odd_increment, block_size_i, block_size_j, block_size_k) \
+#define SQUARE_DGEMM_HELPER(odd_increment, block_size_i, block_size_j, block_size_k) \
 void square_dgemm_##odd_increment##_##block_size_i##_##block_size_j##_##block_size_k(int lda, double* restrict A, double* restrict B, double* restrict C) \
 { \
 	int fringe_start_i = lda / (block_size_i) * (block_size_i); \
@@ -105,14 +118,14 @@ void square_dgemm_##odd_increment##_##block_size_i##_##block_size_j##_##block_si
 	int fringe_start_k = lda / (block_size_k) * (block_size_k); \
  \
   for (int i = 0; i < fringe_start_i; i += (block_size_i)) { \
-		for(int x = i; x < 32 + i; x++) { \
+		for(int x = i; x < (block_size_i) + i; x++) { \
 			memcpy(A_buffered + (x-i)*(lda+(odd_increment)), A + x*lda, lda*sizeof(double)); \
 		} \
     \
 		for (int j = 0; j < fringe_start_j; j += (block_size_j)) { \
       for (int k = 0; k < fringe_start_k; k += (block_size_k)) \
       { \
-				do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j##_##block_size_k(lda, A_buffered + i%32 * (lda+(odd_increment)) + k, B + j*(lda + (odd_increment)) + k, C + i*lda + j); \
+				do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j##_##block_size_k(lda, A_buffered + i%(block_size_i) * (lda+(odd_increment)) + k, B + j*(lda + (odd_increment)) + k, C + i*lda + j); \
 				/* do_block_##odd_increment(lda, (block_size_i), (block_size_j), (block_size_k), A + i*lda + k, B + j*(lda+(odd_increment)) + k, C + i*lda + j); */ \
       } \
 		} \
@@ -188,8 +201,10 @@ void square_dgemm_##odd_increment##_##block_size_i##_##block_size_j##_##block_si
 	} \
 }
 
-SQUARE_DGEMM_EXPAND(1, 32, 32, 32)
-SQUARE_DGEMM_EXPAND(0, 32, 32, 32)
+#define SQUARE_DGEMM_EXPAND(odd_increment, block_size_i, block_size_j, block_size_k) SQUARE_DGEMM_HELPER(odd_increment, block_size_i, block_size_j, block_size_k)
+
+SQUARE_DGEMM_EXPAND(1, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)
+SQUARE_DGEMM_EXPAND(0, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)
 
 
 void square_dgemm (int lda, double* restrict A, double* restrict B, double* restrict C) {
@@ -204,7 +219,7 @@ void square_dgemm (int lda, double* restrict A, double* restrict B, double* rest
       }
     }
 		
-		square_dgemm_0_32_32_32(lda, A, B_global_transpose, C);
+		SQUARE_DGEMM(0, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)(lda, A, B_global_transpose, C);
   }
   else {
     for (int i = 0; i < lda; i += 32) {
@@ -217,7 +232,7 @@ void square_dgemm (int lda, double* restrict A, double* restrict B, double* rest
       }
     }
 		
-		square_dgemm_1_32_32_32(lda, A, B_global_transpose, C);
+		SQUARE_DGEMM(1, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)(lda, A, B_global_transpose, C);
   }
 }
 
