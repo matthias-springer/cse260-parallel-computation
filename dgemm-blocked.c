@@ -29,7 +29,7 @@ int BLOCK_SIZE_K = 32;
 /* This auxiliary subroutine performs a smaller dgemm operation
  *  C := C + A * B
  * where C is M-by-N, A is M-by-K, and B is K-by-N. */
-static void do_block (int lda, int M, int N, int K, double* A, double* B, double* C)
+static void do_block (int lda, int M, int N, int K, double* restrict A, double* restrict B, double* restrict C)
 {
   /* For each row i of A */
   for (int i = 0; i < M; ++i)
@@ -52,9 +52,13 @@ static void do_block (int lda, int M, int N, int K, double* A, double* B, double
 
 #define BUFFER_A 1
 
-double* A_buffered;
-double* B_transposed;
-static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER_I, int BLOCK_SIZE_REGISTER_J, int BLOCK_SIZE_REGISTER_K, double* A, double* B, double* C)
+//double* restrict A_buffered;
+//double* restrict B_transposed;
+
+double A_buffered[32*32*sizeof(double)] __attribute__((aligned(16)));
+double B_transposed[32*32*sizeof(double)] __attribute__((aligned(16)));
+
+static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER_I, int BLOCK_SIZE_REGISTER_J, int BLOCK_SIZE_REGISTER_K, double* restrict A, double* restrict B, double* restrict C)
 {
 	// transpose matrix B
 	for (int k = 0; k < BLOCK_SIZE_REGISTER_K; k++)
@@ -68,9 +72,10 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER_I, int BLOCK_SIZ
 #ifdef BUFFER_A
 	// buffer matrix A
 	for (int i = 0; i < BLOCK_SIZE_REGISTER_I; i++) {
-		for (int k = 0; k < BLOCK_SIZE_REGISTER_K; k++) {
-			A_buffered[i*BLOCK_SIZE_REGISTER_K + k] = A[i*lda + k];
-		}
+//		for (int k = 0; k < BLOCK_SIZE_REGISTER_K; k++) {
+//			A_buffered[i*BLOCK_SIZE_REGISTER_K + k] = A[i*lda + k];
+//		}
+		memcpy(A_buffered + i*BLOCK_SIZE_REGISTER_K, A + i*lda, BLOCK_SIZE_REGISTER_K * sizeof(double)); 
 	}
 #endif
 
@@ -175,10 +180,12 @@ static void do_block_unrolled (int lda, int BLOCK_SIZE_REGISTER_I, int BLOCK_SIZ
  *  C := C + A * B
  * where A, B, and C are lda-by-lda matrices stored in row-major order
  * On exit, A and B maintain their input values. */  
-void square_dgemm (int lda, double* A, double* B, double* C)
+void square_dgemm (int lda, double* restrict A, double* restrict B, double* restrict C)
 {
-		BLOCK_SIZE_K = min(lda/8*8, 128);
-		BLOCK_SIZE_I = BLOCK_SIZE_J =  (1024 / 2 / BLOCK_SIZE_K) / 8 * 8;
+//		BLOCK_SIZE_K = min(lda/8*8, 128);
+//		BLOCK_SIZE_I = BLOCK_SIZE_J =  (1024 / 2 / BLOCK_SIZE_K) / 8 * 8;
+
+	BLOCK_SIZE_I = BLOCK_SIZE_J = BLOCK_SIZE_K = 32;
 
 //	printf("  BLOCK_SIZE_I: %i, BLOCK_SIZE_J: %i, BLOCK_SIZE_K: %i\n", BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K);
 
@@ -191,8 +198,8 @@ void square_dgemm (int lda, double* A, double* B, double* C)
 	int fringe_start_j = lda / BLOCK_SIZE_REGISTER_J * BLOCK_SIZE_REGISTER_J;
 	int fringe_start_k = lda / BLOCK_SIZE_REGISTER_K * BLOCK_SIZE_REGISTER_K;
 
-	B_transposed = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER_K*BLOCK_SIZE_REGISTER_J);
-	A_buffered = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER_K*BLOCK_SIZE_REGISTER_I);
+//	B_transposed = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER_K*BLOCK_SIZE_REGISTER_J);
+//	A_buffered = (double*) memalign(16, sizeof(double) * BLOCK_SIZE_REGISTER_K*BLOCK_SIZE_REGISTER_I);
 
   /* For each block-row of A */ 
   for (int i = 0; i < fringe_start_i; i += BLOCK_SIZE_REGISTER_I)
@@ -277,6 +284,6 @@ void square_dgemm (int lda, double* A, double* B, double* C)
 		do_block_not_unrolled(i, j, k, lda - i, lda - j, lda - k);
 	}
 
-	free(B_transposed);
-	free(A_buffered);
+	//free(B_transposed);
+	//free(A_buffered);
 }

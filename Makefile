@@ -48,7 +48,7 @@ ifeq ($(NO_BLAS), 1)
     CFLAGS += -DNO_BLAS
 endif
 
-CFLAGS += -DVALIDATION=$(VALIDATION) -O3
+CFLAGS += -DVALIDATION=$(VALIDATION) -O3 -msse -msse2 -msse3 -m3dnow -mfpmath=sse -fomit-frame-pointer
 
 #DEBUG += -DDEBUG
 
