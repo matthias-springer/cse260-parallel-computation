@@ -76,18 +76,18 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
 				index_B += 2; \
         __m128d b4 = _mm_load_pd(B + index_B); \
  \
+				index_B += 2; \
 				__m128d d1 = _mm_mul_pd(a1, b1); \
+				index_A += 2; \
 				__m128d d2 = _mm_mul_pd(a2, b2); \
+ \
         __m128d d3 = _mm_mul_pd(a3, b3); \
         __m128d d4 = _mm_mul_pd(a4, b4); \
-				index_A += 2; \
  \
 				__m128d c1 = _mm_add_pd(d1, d2); \
 				__m128d c2 = _mm_add_pd(d3, d4); \
 				__m128d c3 = _mm_add_pd(c1, c2); \
 				__m128d c4 = _mm_unpackhi_pd(c3, c3); \
- \
-				index_B += 2; \
  \
 				cij += _mm_cvtsd_f64(c3); \
 				cij += _mm_cvtsd_f64(c4); \
