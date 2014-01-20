@@ -24,7 +24,7 @@ int BLOCK_SIZE_K = 32;
 #define min(a,b) (((a)<(b))?(a):(b))
 
 #define do_block_not_unrolled(i, j, k, M, N, K) \
-        do_block(lda, (M), (N), (K), A + (i)*lda + (k), B + (k)*lda + (j), C + (i)*lda + (j));
+        do_block(lda, (M), (N), (K), A + (i)*lda + (k), B + (j)*lda + (k), C + (i)*lda + (j));
 
 /* This auxiliary subroutine performs a smaller dgemm operation
  *  C := C + A * B
@@ -39,7 +39,11 @@ static void do_block (int lda, int M, int N, int K, double* restrict A, double* 
       /* Compute C(i,j) */
       double cij = C[i*lda+j];
       for (int k = 0; k < K; ++k)
-	cij += A[i*lda+k] * B[k*lda+j];
+			{
+				cij += A[i*lda+k] * B[j*lda+k];
+				//printf("ASD");
+			}
+
       C[i*lda+j] = cij;
     }
 }
@@ -62,10 +66,8 @@ double B_global_transpose[800*800*sizeof(double)] __attribute__((aligned(16)));
 static void do_block_unrolled_32 (int lda, double* restrict A, double* restrict B, double* restrict C)
 {
 	for (int i = 0; i < BLOCK_SIZE_REGISTER_I_32; ++i)
-    /* For each column j of B */
 		for (int j = 0; j < BLOCK_SIZE_REGISTER_J_32; ++j)
     {
-      /* Compute C(i,j) */
       double cij = C[i*lda+j];
 
 			for (int k = 0; k < BLOCK_SIZE_REGISTER_K_32; k += 8) {
@@ -100,8 +102,6 @@ static void do_block_unrolled_32 (int lda, double* restrict A, double* restrict 
 
 
 void square_dgemm (int lda, double* restrict A, double* restrict B, double* restrict C) {
-//	double * B_global_transpose = memalign(16, lda*lda*sizeof(double));
-
 	if (lda % 2 == 0) {
 		for (int i = 0; i < lda; i += 32) {
 			for (int j = 0; j < lda; j += 32) {
@@ -112,6 +112,17 @@ void square_dgemm (int lda, double* restrict A, double* restrict B, double* rest
 				}
 			}
 		}
+	}
+	else {
+    for (int i = 0; i < lda; i += 32) {
+      for (int j = 0; j < lda; j += 32) {
+        for (int i0 = i; i0 < min(i + 32, lda); ++i0) {
+          for (int j0 = j; j0 < min(j + 32, lda); ++j0) {
+            B_global_transpose[i0*(lda+1) + j0] = B[j0*lda + i0];
+          }
+        }
+      }
+    }
 	}
 
 	square_dgemm_32(lda, A, B_global_transpose, C);
@@ -127,21 +138,16 @@ void square_dgemm_32 (int lda, double* restrict A, double* restrict B, double* r
 	int fringe_start_j = lda / BLOCK_SIZE_REGISTER_J_32 * BLOCK_SIZE_REGISTER_J_32;
 	int fringe_start_k = lda / BLOCK_SIZE_REGISTER_K_32 * BLOCK_SIZE_REGISTER_K_32;
 
-  /* For each block-row of A */ 
   for (int i = 0; i < fringe_start_i; i += BLOCK_SIZE_REGISTER_I_32){
-		for(int x=i; x< 32 + i; x++){
+		for(int x = i; x < 32 + i; x++){
 			memcpy(A_buffered + (x-i)*lda, A + x*lda, lda*sizeof(double));
 		}
-
-
- /* For each block-column of B */
-    for (int j = 0; j < fringe_start_j; j += BLOCK_SIZE_REGISTER_J_32) {
-					
-      /* Accumulate block dgemms into block of C */
+    
+		for (int j = 0; j < fringe_start_j; j += BLOCK_SIZE_REGISTER_J_32) {
       for (int k = 0; k < fringe_start_k; k += BLOCK_SIZE_REGISTER_K_32)
       {
 				do_block_unrolled_32(lda, A_buffered + i%32 *lda + k, B + j*lda + k, C + i*lda + j);
-				//do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER_I, BLOCK_SIZE_REGISTER_J, BLOCK_SIZE_REGISTER_K);
+				//do_block_not_unrolled(i, j, k, BLOCK_SIZE_REGISTER_I_32, BLOCK_SIZE_REGISTER_J_32, BLOCK_SIZE_REGISTER_K_32);
 				//do_block_not_unrolled(i, j, k, min(lda-i, BLOCK_SIZE_REGISTER), min(lda-j, BLOCK_SIZE_REGISTER), min(lda-k, BLOCK_SIZE_REGISTER));
 
       }
@@ -216,7 +222,4 @@ void square_dgemm_32 (int lda, double* restrict A, double* restrict B, double* r
 
 		do_block_not_unrolled(i, j, k, lda - i, lda - j, lda - k);
 	}
-
-	//free(B_transposed);
-	//free(A_buffered);
 }

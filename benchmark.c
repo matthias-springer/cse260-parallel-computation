@@ -12,6 +12,7 @@
 
 #include <float.h>  // For: DBL_EPSILON
 #include <math.h>   // For: fabs
+#include <time.h>
 
 #include "cblas.h"
 
@@ -59,8 +60,17 @@ void Fail (const char* message)
 
 void fill (double* p, int n)
 {
+#if VALIDATION != 1
   for (int i = 0; i < n; ++i)
     p[i] = 2 * drand48() - 1; // Uniformly distributed over [-1, 1]
+#endif
+
+#if VALIDATION==1
+	for (int i = 0; i < n; ++i) {
+		p[i] = rand() % 51;
+	}
+#endif
+
 }
 
 void absolute_value (double *p, int n)
