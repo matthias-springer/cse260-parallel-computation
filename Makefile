@@ -48,8 +48,8 @@ ifeq ($(NO_BLAS), 1)
     CFLAGS += -DNO_BLAS
 endif
 
-CFLAGS += -DVALIDATION=$(VALIDATION) -O4 -msse -msse2 -msse3 -m3dnow -mfpmath=sse
-#CFLAGS += -DVALIDATION=$(VALIDATION)
+#CFLAGS += -DVALIDATION=$(VALIDATION) -O4 -msse -msse2 -msse3 -m3dnow -mfpmath=sse
+CFLAGS += -DVALIDATION=$(VALIDATION) -foptimize-register-move -O3 -msse -funroll-loops -msse2 -msse3 -m3dnow -mfpmath=sse -mfpmath=sse -malign-double
 
 #DEBUG += -DDEBUG
 

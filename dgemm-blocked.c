@@ -7,6 +7,7 @@
  */
 
 #include <emmintrin.h>
+//#include <pmmintrin.h>
 //#include <malloc.h>
 //#include <string.h>
 
@@ -55,41 +56,38 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
 		register int index_A = i*(lda + (odd_increment)); \
 		register int index_C = i*lda; \
 		\
-		for (int j = 0; j < (block_size_j); ++j) \
+		for (int j = 0; j < (block_size_j); j += 2) \
     { \
-      __m128d cij = _mm_setzero_pd(); \
-			register int index_B = j*(lda + (odd_increment)); \
+      __m128d cij_1 = _mm_setzero_pd(); \
+			__m128d cij_2 = _mm_setzero_pd(); \
+			register int index_B_1 = j*(lda + (odd_increment)); \
+			register int index_B_2 = index_B_1 + (lda + (odd_increment)); \
  \
-			for (int k = 0; k < (block_size_k); k += 8) { \
+			for (int k = 0; k < (block_size_k); k += 4) { \
 				__m128d a1 = _mm_load_pd(A + index_A); \
 				index_A += 2; \
+        __m128d b1 = _mm_load_pd(B + index_B_1); \
+        index_B_1 += 2; \
 				__m128d a2 = _mm_load_pd(A + index_A); \
 				index_A += 2; \
-        __m128d a3 = _mm_load_pd(A + index_A); \
-				index_A += 2; \
-        __m128d a4 = _mm_load_pd(A + index_A); \
-        index_A += 2; \
+        __m128d b2 = _mm_load_pd(B + index_B_1); \
+        index_B_1 += 2; \
+				cij_1 = _mm_add_pd(cij_1, _mm_add_pd(_mm_mul_pd(a1, b1), _mm_mul_pd(a2, b2))); \
  \
-        __m128d b1 = _mm_load_pd(B + index_B); \
-				index_B += 2; \
-        __m128d b2 = _mm_load_pd(B + index_B); \
-				index_B += 2; \
-        __m128d b3 = _mm_load_pd(B + index_B); \
-				index_B += 2; \
-        __m128d b4 = _mm_load_pd(B + index_B); \
-				index_B += 2; \
- \
-				a1 = _mm_add_pd(_mm_mul_pd(a1, b1), _mm_mul_pd(a2, b2)); \
-				a3 = _mm_add_pd(_mm_mul_pd(a3, b3), _mm_mul_pd(a4, b4)); \
-				a3 = _mm_add_pd(a1, a3); \
- \
-				cij = _mm_add_pd(cij, a3); \ 
+        __m128d b3 = _mm_load_pd(B + index_B_2); \
+        index_B_2 += 2; \
+        __m128d b4 = _mm_load_pd(B + index_B_2); \
+        index_B_2 += 2; \
+        cij_2 = _mm_add_pd(cij_2, _mm_add_pd(_mm_mul_pd(a1, b3), _mm_mul_pd(a2, b4))); \
 			} \
  \
-			__m128d cij2 = _mm_unpackhi_pd(cij, cij); \
-			C[index_C] += _mm_cvtsd_f64(cij) + _mm_cvtsd_f64(cij2); \
+			__m128d cij_1_u = _mm_unpackhi_pd(cij_1, cij_1); \
+			C[index_C] += _mm_cvtsd_f64(cij_1) + _mm_cvtsd_f64(cij_1_u); \
+      __m128d cij_2_u = _mm_unpackhi_pd(cij_2, cij_2); \
+      C[index_C + 1] += _mm_cvtsd_f64(cij_2) + _mm_cvtsd_f64(cij_2_u); \
+ \
 			index_A -= (block_size_k); \
-			index_C++; \
+			index_C += 2; \
 		} \
 	} \
 }
