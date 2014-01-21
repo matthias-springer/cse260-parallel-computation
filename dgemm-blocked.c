@@ -7,7 +7,8 @@
  */
 
 #include <emmintrin.h>
-#include <malloc.h>
+//#include <malloc.h>
+//#include <string.h>
 
 const char* dgemm_desc = "Simple blocked dgemm.";
 
@@ -15,7 +16,8 @@ const char* dgemm_desc = "Simple blocked dgemm.";
 #define BLOCK_SIZE_J 32
 #define BLOCK_SIZE_K 32
 
-#define min(a,b) (((a)<(b))?(a):(b))
+#define MIN_HELPER(a,b) (((a)<(b))?(a):(b))
+#define min(a, b) MIN_HELPER(a, b)
 
 #define do_block_not_unrolled(i, j, k, M, N, K) \
         do_block_1(lda, (M), (N), (K), A + (i)*lda + (k), B + (j)*lda + (k), C + (i)*lda + (j));
@@ -114,9 +116,9 @@ DO_BLOCK_UNROLLED_EXPAND(1, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)
 #define SQUARE_DGEMM_HELPER(odd_increment, block_size_i, block_size_j, block_size_k) \
 void square_dgemm_##odd_increment##_##block_size_i##_##block_size_j##_##block_size_k(int lda, double* restrict A, double* restrict B, double* restrict C) \
 { \
-	int fringe_start_i = lda / (block_size_i) * (block_size_i); \
-	int fringe_start_j = lda / (block_size_j) * (block_size_j); \
-	int fringe_start_k = lda / (block_size_k) * (block_size_k); \
+	const register int fringe_start_i = lda / (block_size_i) * (block_size_i); \
+	const register int fringe_start_j = lda / (block_size_j) * (block_size_j); \
+	const register int fringe_start_k = lda / (block_size_k) * (block_size_k); \
  \
   for (int i = 0; i < fringe_start_i; i += (block_size_i)) { \
 		for(int x = i; x < (block_size_i) + i; x++) { \

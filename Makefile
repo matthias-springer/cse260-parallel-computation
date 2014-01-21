@@ -48,8 +48,8 @@ ifeq ($(NO_BLAS), 1)
     CFLAGS += -DNO_BLAS
 endif
 
-#CFLAGS += -DVALIDATION=$(VALIDATION) -O3 -msse -msse2 -msse3 -m3dnow -mfpmath=sse -pg
-CFLAGS += -DVALIDATION=$(VALIDATION)
+CFLAGS += -DVALIDATION=$(VALIDATION) -O4 -msse -msse2 -msse3 -m3dnow -mfpmath=sse
+#CFLAGS += -DVALIDATION=$(VALIDATION)
 
 #DEBUG += -DDEBUG
 
