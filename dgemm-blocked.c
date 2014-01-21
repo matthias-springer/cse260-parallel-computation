@@ -79,14 +79,8 @@ static void do_block_unrolled_##odd_increment##_##block_size_i##_##block_size_j#
         __m128d b4 = _mm_load_pd(B + index_B); \
 				index_B += 2; \
  \
-				a1 = _mm_mul_pd(a1, b1); \
-				a2 = _mm_mul_pd(a2, b2); \
- \
-        a3 = _mm_mul_pd(a3, b3); \
-        a4 = _mm_mul_pd(a4, b4); \
- \
-				a1 = _mm_add_pd(a1, a2); \
-				a3 = _mm_add_pd(a3, a4); \
+				a1 = _mm_add_pd(_mm_mul_pd(a1, b1), _mm_mul_pd(a2, b2)); \
+				a3 = _mm_add_pd(_mm_mul_pd(a3, b3), _mm_mul_pd(a4, b4)); \
 				a3 = _mm_add_pd(a1, a3); \
  \
 				cij = _mm_add_pd(cij, a3); \ 
@@ -133,6 +127,7 @@ void square_dgemm_##odd_increment##_##block_size_i##_##block_size_j##_##block_si
       } \
 		} \
 	} \
+	if (fringe_start_i == lda && fringe_start_j == lda && fringe_start_k == lda) return; \
 	/* For the fringe cases */ \
 	/* {i} */ \
 	{ \
