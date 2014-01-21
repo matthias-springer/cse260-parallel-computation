@@ -49,7 +49,7 @@ ifeq ($(NO_BLAS), 1)
 endif
 
 #CFLAGS += -DVALIDATION=$(VALIDATION) -O4 -msse -msse2 -msse3 -m3dnow -mfpmath=sse
-CFLAGS += -DVALIDATION=$(VALIDATION) -foptimize-register-move -O3 -msse -funroll-loops -msse2 -msse3 -m3dnow -mfpmath=sse -mfpmath=sse -malign-double
+CFLAGS += -DVALIDATION=$(VALIDATION) -DBLOCK_SIZE_I=$(BSI) -DBLOCK_SIZE_J=$(BSJ) -DBLOCK_SIZE_K=$(BSK) -foptimize-register-move -O3 -msse -funroll-loops -msse2 -msse3 -m3dnow -mfpmath=sse -mfpmath=sse -malign-double
 
 #DEBUG += -DDEBUG
 

@@ -13,9 +13,9 @@
 
 const char* dgemm_desc = "Simple blocked dgemm.";
 
-#define BLOCK_SIZE_I 8
-#define BLOCK_SIZE_J 8
-#define BLOCK_SIZE_K 64
+//#define BLOCK_SIZE_I 24
+//#define BLOCK_SIZE_J 24
+//#define BLOCK_SIZE_K 64
 
 #define MIN_HELPER(a,b) (((a)<(b))?(a):(b))
 #define min(a, b) MIN_HELPER(a, b)
