@@ -224,6 +224,7 @@ int main (int argc, char **argv)
       Gflops_s = 2.e-9 * n_iterations * n * n * n / seconds;
     } 
     printf ("%d %.3g\n", n, Gflops_s);
+		fflush(stdout);
 
     /* Ensure that error does not exceed the theoretical error bound. */
 

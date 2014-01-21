@@ -39,4 +39,4 @@
 # Change to the directory where the job was submitted from
 cd $SGE_O_WORKDIR
 
-builds/blocked_8_8
+builds/blocked_8_8 > PROFILE_OUTUT_8_8
