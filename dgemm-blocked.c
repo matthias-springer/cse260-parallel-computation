@@ -210,31 +210,56 @@ SQUARE_DGEMM_EXPAND(1, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)
 SQUARE_DGEMM_EXPAND(0, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)
 
 
+#define TRANSPOSE_B_HELPER(odd_increment, block_size_i, block_size_j) \
+for (int i = 0; i < fringe_start_i; i += (block_size_i)) { \
+  for (int j = 0; j < fringe_start_j; j += (block_size_i)) { \
+    for (int i0 = i; i0 < i + (block_size_i); ++i0) { \
+			register int index_L = i0*(lda + (odd_increment)) + j; \
+			register int index_R = i0 + j*lda; \
+      for (int j0 = j; j0 < j + (block_size_j); ++j0) { \
+        B_global_transpose[index_L] = B[index_R]; \
+				index_L++; \
+				index_R += lda; \
+      } \
+    } \
+  } \
+} \
+ \
+{ \
+	for (int i = fringe_start_i; i < lda; i++) { \
+		for (int j = 0; j < fringe_start_j; j++) { \
+			B_global_transpose[i*(lda + (odd_increment)) + j] = B[j*lda + i]; \
+		} \
+	} \
+} \
+{ \
+  for (int i = 0; i < fringe_start_i; i++) { \
+    for (int j = fringe_start_j; j < lda; j++) { \
+      B_global_transpose[i*(lda + (odd_increment)) + j] = B[j*lda + i]; \
+    } \
+  } \
+} \
+{ \
+  for (int i = fringe_start_i; i < lda; i++) { \
+    for (int j = fringe_start_j; j < lda; j++) { \
+      B_global_transpose[i*(lda + (odd_increment)) + j] = B[j*lda + i]; \
+    } \
+  } \
+} \
+
+#define TRANSPOSE_B_EXPAND(odd_increment, block_size_i, block_size_j) TRANSPOSE_B_HELPER(odd_increment, block_size_i, block_size_j)
+
+
 void square_dgemm (int lda, double* restrict A, double* restrict B, double* restrict C) {
+	const register int fringe_start_i = lda / BLOCK_SIZE_I * BLOCK_SIZE_I;
+	const register int fringe_start_j = lda / BLOCK_SIZE_J * BLOCK_SIZE_J;
+
   if (lda % 2 == 0) {
-    for (int i = 0; i < lda; i += 32) {
-      for (int j = 0; j < lda; j += 32) {
-        for (int i0 = i; i0 < min(i + 32, lda); ++i0) {
-          for (int j0 = j; j0 < min(j + 32, lda); ++j0) {
-            B_global_transpose[i0*lda + j0] = B[j0*lda + i0];
-          }
-        }
-      }
-    }
-		
+		TRANSPOSE_B_EXPAND(0, BLOCK_SIZE_I, BLOCK_SIZE_J);
 		SQUARE_DGEMM(0, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)(lda, A, B_global_transpose, C);
   }
   else {
-    for (int i = 0; i < lda; i += 32) {
-      for (int j = 0; j < lda; j += 32) {
-        for (int i0 = i; i0 < min(i + 32, lda); ++i0) {
-          for (int j0 = j; j0 < min(j + 32, lda); ++j0) {
-            B_global_transpose[i0*(lda + 1) + j0] = B[j0*lda + i0];
-          }
-        }
-      }
-    }
-		
+		TRANSPOSE_B_EXPAND(1, BLOCK_SIZE_I, BLOCK_SIZE_J);
 		SQUARE_DGEMM(1, BLOCK_SIZE_I, BLOCK_SIZE_J, BLOCK_SIZE_K)(lda, A, B_global_transpose, C);
   }
 }
