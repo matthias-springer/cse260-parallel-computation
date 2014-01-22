@@ -26,10 +26,23 @@
 
 \section{Introduction}
 
+\subsection{Assumptions}
+\begin{itemize}
+	\item All matrices are square matrices.
+	\item All matrices consist of double-precision floating point values (64-bit doubles).
+\end{itemize}
+
+\subsection{Notation}
+In this work, we use the following notation and variable names.
+\begin{itemize}
+	\item $n$ is the size of one dimension of the matrices involved. I.e., every matrix has $n^2$ values.
+	\item When referring to matrices, $A$ and $B$ denote the source matrices and $C$ denotes the target matrix, i.e. $AB = C$.
+\end{itemize}
+
 \section{Hardware}
 
 \section{Basic Algorithm}
-The naive implementation of the matrix multiplication algorithm consists of three nested \lstinline{for} loops, where every loop runs from $1$ to $n$. In the innermost loop, a single addition and multiplication is done. Therefore, the runtime complexity of this algorithm is $\mathcal{O}(n^3)$ floating-point operations. We did not use an algorithm with a.
+The naive implementation of the matrix multiplication algorithm consists of three nested \lstinline{for} loops, where every loop runs from $1$ to $n$. In the innermost loop, a single addition and multiplication is done. Therefore, the runtime complexity of this algorithm is $\mathcal{O}(n^3)$ floating-point operations. We did not use an algorithm with a lower runtime complexity\footnote{Strassen's algorithm has a runtime complexity of $\mathcal{O}(n^{2.8})$.} because the idea of this assignment is to get familiar with memory access and caching. 
 
 \section{Optimizations}
 
