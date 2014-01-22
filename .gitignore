@@ -4,4 +4,8 @@ benchmark-blocked
 benchmark-naive
 *.o*
 .svn
+*.log
+*.aux
+*.thm
+write/work.pdf
 
