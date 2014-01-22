@@ -158,10 +158,16 @@ The size of the Level 2 cache is $4$ MB. Therefore, we can store $\frac{4 \cdot 
 % theoretical explanation why it does not work
 
 \subsection{Matrix Transposition}
+To take advantage of cache locality, we transpose the matrix \lstinline{B} before running the actual algorithm. In the basic version of the algorithm, we access \lstinline{B} column by column. For sufficiently big matrices, every subsequent access into \lstinline{B} triggers a cache miss and loads a new cache line into the L1 cache. The L1 cache is $32$ KB big, resulting in $\frac{32 \cdot 1024}{64 \cdot 3} = 170$ cache lines per matrix. When we start accessing the $171$th row, the first row is evicted from the cache\footnote{Assuming a LRU replacement strategy.}. This problem is solved by L1 blocking as long as the block size is smaller or equal to $170$. For bigger block sizes, transposing the matrix helps, because when reading the matrix row by row, we have a lot of cache hits after every cache miss due to prefetching. 
 
 \subsection{Register Blocking and Loop Unrolling}
 
 \subsection{Matrix Buffering}
+Matrix buffering is the process of duplicating the whole matrix or a part of the matrix in the memory. \lstinline{B} is buffered entirely before the run of the actual algorithm, as part of the matrix transposition. \lstinline{A} is buffered partly: when blocking for the L1 cache, we buffer \lstinline{A} block by block, i.e. we only buffer the parts of \lstinline{A} that are contained the current block of \lstinline{A}.
+
+The buffers for \lstinline{A} and \lstinline{B} are 16-byte aligned. This is important for vectorization, because it allows for aligned loads that are considerably faster than unaligned loads. In case the matrix size $n$ is odd, we add a $8$ byte padding at the end of each row. Therefore, every row is $16$-byte aligned\footnote{We are reading both \lstinline{A} and the transposed version of \lstinline{B} row by row.}.
+
+We tried buffering the matrix \lstinline{C}, as well, but it did not result in a performance increase. In general, matrix buffering is sometimes used to minimize TLB cache misses. The copied part of the matrix is often smaller and fits in less memory pages. We chose the block sizes for L1 blocking in such a way that every block of \lstinline{A}, \lstinline{B}, and \lstinline{C} fits entirely into the L1 cache. The CPU that we optimized for has a primary (first-level) TLB cache of size $64$ and a secondary (second-level) TLB cache of size $512$. Since the L1 cache can hold at most $\frac{32 \cdot 1024}{64} = 512$ cache lines, the TLB cache is big enough to cover a block of all three matrices at the same time.
 
 \subsection{Streaming SIMD Extensions (SSE)}
 % + fused add multiply
