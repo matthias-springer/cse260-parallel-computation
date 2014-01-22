@@ -163,11 +163,22 @@ To take advantage of cache locality, we transpose the matrix \lstinline{B} befor
 \subsection{Register Blocking and Loop Unrolling}
 
 \subsection{Matrix Buffering}
-Matrix buffering is the process of duplicating the whole matrix or a part of the matrix in the memory. \lstinline{B} is buffered entirely before the run of the actual algorithm, as part of the matrix transposition. \lstinline{A} is buffered partly: when blocking for the L1 cache, we buffer \lstinline{A} block by block, i.e. we only buffer the parts of \lstinline{A} that are contained the current block of \lstinline{A}.
+Matrix buffering is the process of duplicating the whole matrix or a part of the matrix in the memory. \lstinline{B} is buffered entirely before the run of the actual algorithm, as part of the matrix transposition. \lstinline{A} is buffered partly: when blocking for the L1 cache, we buffer \lstinline{A} block by block, i.e. we only buffer the parts of \lstinline{A} that are contained the current block of \lstinline{A}. We tried buffering the matrix \lstinline{C}, as well, but it did not result in a performance increase. 
 
+\subsubsection{Memory Alignment}
 The buffers for \lstinline{A} and \lstinline{B} are 16-byte aligned. This is important for vectorization, because it allows for aligned loads that are considerably faster than unaligned loads. In case the matrix size $n$ is odd, we add a $8$ byte padding at the end of each row. Therefore, every row is $16$-byte aligned\footnote{We are reading both \lstinline{A} and the transposed version of \lstinline{B} row by row.}.
 
-We tried buffering the matrix \lstinline{C}, as well, but it did not result in a performance increase. In general, matrix buffering is sometimes used to minimize TLB cache misses. The copied part of the matrix is often smaller and fits in less memory pages. We chose the block sizes for L1 blocking in such a way that every block of \lstinline{A}, \lstinline{B}, and \lstinline{C} fits entirely into the L1 cache. The CPU that we optimized for has a primary (first-level) TLB cache of size $64$ and a secondary (second-level) TLB cache of size $512$. Since the L1 cache can hold at most $\frac{32 \cdot 1024}{64} = 512$ cache lines, the TLB cache is big enough to cover a block of all three matrices at the same time.
+\subsubsection{TLB Cache}
+In general, matrix buffering is sometimes used to minimize TLB cache misses. The copied part of the matrix is often smaller and fits in less memory pages. We chose the block sizes for L1 blocking in such a way that every block of \lstinline{A}, \lstinline{B}, and \lstinline{C} fits entirely into the L1 cache. The CPU that we optimized for has a primary (first-level) TLB cache of size $64$ and a secondary (second-level) TLB cache of size $512$. Since the L1 cache can hold at most $\frac{32 \cdot 1024}{64} = 512$ cache lines, the TLB cache is big enough to cover a block of all three matrices at the same time.
+
+\subsubsection{Performance}
+\begin{figure}
+	\includegraphics[width=\textwidth]{graphs/profiles/PROFILE_NO_BUFFER_A.pdf}
+	\caption{Performance of our parameter-tuned blocking version, with and without buffering \lstinline{A}.}
+	\label{fig:bufferA}
+\end{figure}
+
+Figure~\ref{fig:bufferA} compares the performance of our fully-optimized implementation with and without buffering \lstinline{A}. Note, that for the unbuffered version, we had to use unaligned loads for \lstinline{A} in the vectorized code, because the matrix size $n$ could be odd.
 
 \subsection{Streaming SIMD Extensions (SSE)}
 % + fused add multiply
@@ -195,9 +206,6 @@ Figure~\ref{fig:param_results} shows the performance of the parameter-tuned vers
 	\caption{Performance of our parameter-tuned blocking version, in comparison to ATLAS.}
 	\label{fig:param_results}
 \end{figure}
-
-\section{Performance Evaluation}
-\subsection{Parameter Tuning}
 
 \newpage
 \section*{Appendix}
