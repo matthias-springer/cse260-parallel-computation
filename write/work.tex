@@ -153,6 +153,8 @@ for (int i = 0; i < BLOCK_SIZE; i++)
 			C[i][j]+=A[i][k]+B[k][j];
 \end{lstlisting}
 
+%Handling fringe cases
+
 \subsection{Blocking for L2 Cache}
 The size of the Level 2 cache is $4$ MB. Therefore, we can store $\frac{4 \cdot 1024^2}{8}$ matrix entries in the L2 cache. Since we have three matrices \lstinline{A}, \lstinline{B}, and \lstinline{C}, blocking for the L2 cache can increase the performance only if $n > \sqrt{\frac{4 \cdot 1024^2}{8 \cdot 3}} = 418$. In our benchmarks, we did not deal with matrices bigger than $1200$ entries. Therefore, we do no blocking for the L2 cache in our final implementation. We implemented L2 blocking in an intermediate version and it lead to a performance decrease, especially for small matrix sizes.
 % theoretical explanation why it does not work
@@ -180,8 +182,99 @@ In general, matrix buffering is sometimes used to minimize TLB cache misses. The
 
 Figure~\ref{fig:bufferA} compares the performance of our fully-optimized implementation with and without buffering \lstinline{A}. Note, that for the unbuffered version, we had to use unaligned loads for \lstinline{A} in the vectorized code, because the matrix size $n$ could be odd.
 
-\subsection{Streaming SIMD Extensions (SSE)}
-% + fused add multiply
+\subsection{Streaming SIMD Extensions (SSE) and Loop Unrolling}
+SSE provides a set of vector registers that can contain multiple numbers at a time and support arithmetic operations on the whole vector at the same time. We tried and evaluted several implementations with a different number of vector registers and different levels of loop unrolling.
+
+\subsubsection{Unrolling \lstinline{k += 2}}
+Our first approach was to vectorize the innermost \lstinline{for} loop and unroll parts of the loop for \lstinline{k += 2}.
+
+\begin{figure}[H]
+\begin{lstlisting}[mathescape]
+void do_block_unrolled_k (int lda, double* A, double* B, double* C)
+{
+	for (int i = 0; i < $b_i$; ++i)
+	{
+		for (int j = 0; j < $b_j$; ++j)
+		{
+			__m128d cij = _mm_setzero_pd();
+
+			for (int k = 0; k < $b_k$; k += 2)
+			{
+				__m128d a =  _mm_load_pd(A + i*lda + k);
+				__m128d b =  _mm_load_pd(B + j*lda + k);
+				cij = _mm_add_pd(cij, _mm_mul_pd(a, b)); 
+			}
+
+			C[i*lda + j] += _mm_cvtsd_f64(cij) + _mm_cvtsd_f64(_mm_unpackhi_pd(cij, cij));
+		}
+	}
+}
+\end{lstlisting}
+\caption{Basic block function with unrolling for \lstinline{k += 2}.}
+\label{fig:basic_sse}
+\end{figure}
+
+This leads to a significant performance increase, for the following reasons.
+\begin{itemize}
+	\item SSE multiplications and additions operate on two doubles at the same time. Therefore, we can in theory process twice as many data at the same time.
+	\item In line~13, the processor can multiply and add at the same time, because it has fused multiply-add unit.
+	\item The loop in line~9 is executed fewer times, because we increased the step size. Therefore, we have less branches in the assembly code and less additions of the loop variable \lstinline{k}.
+\end{itemize}
+
+We tried increasing the step size and loading more values of \lstinline{A} and \lstinline{B} at the same time, in order to have less branches in the assembly code and to take advantage of more vector registers. In the previous code we used only $3$, maybe $4$\footnote{Depending on how the compiler translates line~16.}, registers, but the CPU has $16$ vector registers. Increasing the step size to $4$ or $8$ had, however, only a small effect on the performance. Unrolling \lstinline{i} and \lstinline{j} instead, yields a much greater performance increase.
+
+\subsubsection{Unrolling \lstinline{j += 2, k += 2}}
+We could increase the performance by unrolling both \lstinline{j += 2} and \lstinline{k += 2} at the same time.
+
+\begin{figure}[H]
+\begin{lstlisting}[mathescape]
+void do_block_unrolled_k (int lda, double* A, double* B, double* C)
+{
+	for (int i = 0; i < $b_i$; ++i)
+	{
+		for (int j = 0; j < $b_j$; j += 2)
+		{
+			__m128d cij_1 = _mm_setzero_pd();
+			__m128d cij_2 = _mm_setzero_pd();
+
+			for (int k = 0; k < $b_k$; k += 2)
+			{
+				__m128d a =  _mm_load_pd(A + i*lda + k);
+				__m128d b_1 =  _mm_load_pd(B + j*lda + k);
+				__m128d b_2 =  _mm_load_pd(B + (j+1)*lda + k);
+				cij_1 = _mm_add_pd(cij_1, _mm_mul_pd(a, b_1)); 
+				cij_2 = _mm_add_pd(cij_2, _mm_mul_pd(a, b_2)); 
+			}
+
+			C[i*lda + j] += _mm_cvtsd_f64(cij_1) + _mm_cvtsd_f64(_mm_unpackhi_pd(cij_1, cij_1));
+			C[i*lda + j + 1] += _mm_cvtsd_f64(cij_2) + _mm_cvtsd_f64(_mm_unpackhi_pd(cij_2, cij_2));
+		}
+	}
+}
+\end{lstlisting}
+\caption{Optimized block function with unrolling for \lstinline{j += 2, k += 2}.}
+\label{fig:opt_1_sse}
+\end{figure}
+
+Note, that in comparison to Figure~\ref{fig:basic_sse}, the value \lstinline{a} is read only once instead of twice. That is the main reason why this code is faster. Besides, we save some branches and arithmetic operations due to the increased step size of \lstinline{j}. In total, we use $5$, maybe $7$, vector registers. This suggests that it may be useful to do more loop unrolling. Unrolling for \lstinline{j += 4, k += 2} or \lstinline{j += 2, k += 4} had only little effect on the performance.
+
+\subsubsection{Unrolling \lstinline{i += 2, j += 2, k += 2}}
+The code for unrolling all three loops adds another load of \lstinline{A + (i+1)*lda + k} to the code in Figure~\ref{fig:opt_1_sse}. Besides, we need two more vector registers \lstinline{cij_3} and \lstinline{cij_4}, because we accumulate values for four different positions in \lstinline{C}. This optimization incrases the performance, because \lstinline{b_1} and \lstinline{b_2} are loaded only once, for two different values \lstinline{a_1} and \lstinline{a_2}. We use at least $8$ vector registers at this point.
+
+\subsubsection{Unrolling \lstinline{i += 2, j += 2, k += 4}}
+This is what we did in the final version of our implementation. Increasing the step size of \lstinline{k} does not save any loads but reduces the number of branches and uses more vector registers: $4$ registers \lstinline{cij_*} to accumulate the increment of $c_{ij}$, $8$ vector registers for loading values of \lstinline{A} and \lstinline{B}, and probably some vector registers for storing intermediate results for \lstinline{_mm_unpackhi_pd}. By unrolling the loops even further, we can not take advantage of additional vector registers, because the CPU has only $16$ vector registers.
+
+\subsubsection{Performance}
+\begin{figure}
+	\includegraphics[width=\textwidth]{graphs/profiles/PROFILE_UNROLLING_SSE.pdf}
+	\caption{Performance of our parameter-tuned blocking version, with different levels of loop unrolling.}
+	\label{fig:sse_opt_graph}
+\end{figure}
+
+Figure~\ref{fig:sse_opt_graph} shows that, in most cases, unrolling for \lstinline{i += 2, j += 2, k += 4} performs best. Therefore, we use this version in our implementation.
+
+\subsection{Constant Propagation and Code Duplication}
+% duplicate code with constants instead of variable access
 
 \subsection{Parameter Tuning}
 Parameter tuning is the task of trying (brute-force) a set of parameters that affect the performance.
