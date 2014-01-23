@@ -58,12 +58,12 @@
 \title{Double-precision General Matrix Multiply (DGEMM)  \\ \vspace{2 mm} {\large Parallel Computation (CSE 260), Assignment 1}}
 %\subtitle{Parallel Computation (CSE 260), Assignment 1}
 \date{\today}
-\author{Andrew Conegliano \and Matthias Springer}
+\author{Andrew Conegliano (A53053325) \and Matthias Springer (A99500782) \\ GID G-338-665}
 \maketitle
 
-\section{Introduction}
-
 \subsection{Assumptions}
+The following assumptions apply within this work.
+
 \begin{itemize}
 	\item All matrices are square matrices.
 	\item All matrices consist of double-precision floating point values (64-bit doubles).
@@ -116,22 +116,14 @@ The naive implementation of the matrix multiplication algorithm consists of thre
 
 \begin{figure}
 \begin{lstlisting}
-void square_dgemm (int n, double* A, double* B, double* C)
-{
- 	for (int i = 0; i < n; ++i)
-    {
-    	for (int j = 0; j < n; ++j)
-    	{
-			double cij = C[i*n+j];
+for i = 0 .. n - 1
+	for j = 0 .. n - 1
+		cij = C[i*n + j]
 
-			for (int k = 0; k < n; k++)
-			{
-				cij += A[i*n+k] * B[k*n+j];
-				C[i*n+j] = cij;
-    		}
-    	}
-    }
-}
+		for k = 0 .. n - 1
+			cij += A[i*n+k] * B[k*n+j]
+
+		C[i*n+j] = cij
 \end{lstlisting}
 \caption{Naive matrix multiplication algorithm.}
 \label{fig:naive_mul}
@@ -144,16 +136,18 @@ In this section, we will describe and evaluation optimizations of our DGEMM algo
 \subsection{Blocking for L1 Cache}
 To increase locality, we implemented blocking.  This restricts the computations into chunks that that fit inside the cache. In the basic algorithm, we read \lstinline{A} row by row left-to-right. \lstinline{B}, on the other hand, is read column by column from the top to the bottom. Every time we access a value in a matrix, we prefetch the next $7$ elements in that row\footnote{A cache line contains $8$ doubles.}, in case we have a cache miss.
 
-%Main memory references are also decreased from $n^3+3n^2$ references in the naive implementation to $2*(n+2)*n^2$. The flop to memory ratio, $q$, is also drastically reduced from $q=2$ as n $\rightarrow \infty$ to $q=n/N=\mathit{BLOCK\_SIZE}$ as n $\rightarrow \infty$.  As the flop to memory ratio decreases, so does the number of caches misses. There are $(n^2_B/8 + n^2_B/8)(n/\mathit{BLOCK\_SIZE})$ cache misses for every C block computed, multiplied by $(N/\mathit{BLOCK\_SIZE})^2$ blocks in C, for a total of $N^3/(4N_B)$. , compared to $(9/8)N^3$.
-
+\begin{figure}
 \begin{lstlisting}
 for (int i = 0; i < BLOCK_SIZE; i++)
 	for (int j = 0; j < BLOCK_SIZE; j++)
 		for (int k = 0; k < BLOCK_SIZE; k++)
 			C[i][j]+=A[i][k]+B[k][j];
 \end{lstlisting}
+\end{figure}
 
-%Handling fringe cases
+For fringe cases, i.e. the edges where it does not divide evenly into bock size, are handled by calling the naive implementation. Because the ratio of the number of fringe cases to the number of non fringe cases is so slow as matrix size grows, performance is only slightly affected for smal matrix sizes.
+
+
 
 \subsection{Blocking for L2 Cache}
 The size of the Level 2 cache is $4$ MB. Therefore, we can store $\frac{4 \cdot 1024^2}{8}$ matrix entries in the L2 cache. Since we have three matrices \lstinline{A}, \lstinline{B}, and \lstinline{C}, blocking for the L2 cache can increase the performance only if $n > \sqrt{\frac{4 \cdot 1024^2}{8 \cdot 3}} = 418$. In our benchmarks, we did not deal with matrices bigger than $1200$ entries. Therefore, we do no blocking for the L2 cache in our final implementation. We implemented L2 blocking in an intermediate version and it lead to a performance decrease, especially for small matrix sizes.
@@ -190,25 +184,16 @@ Our first approach was to vectorize the innermost \lstinline{for} loop and unrol
 
 \begin{figure}[H]
 \begin{lstlisting}[mathescape]
-void do_block_unrolled_k (int lda, double* A, double* B, double* C)
-{
-	for (int i = 0; i < $b_i$; ++i)
-	{
-		for (int j = 0; j < $b_j$; ++j)
-		{
-			__m128d cij = _mm_setzero_pd();
+for i = 0 .. $b_i - 1$
+	for j = 0 .. $b_j - 1$
+		cij = zero vector
 
-			for (int k = 0; k < $b_k$; k += 2)
-			{
-				__m128d a =  _mm_load_pd(A + i*lda + k);
-				__m128d b =  _mm_load_pd(B + j*lda + k);
-				cij = _mm_add_pd(cij, _mm_mul_pd(a, b)); 
-			}
+		for k = 0 .. $b_k - 1$ step 2
+			a = load(A + i*lda + k)
+			b = load(B + j*lda + k)
+			cij = cij + a*b
 
-			C[i*lda + j] += _mm_cvtsd_f64(cij) + _mm_cvtsd_f64(_mm_unpackhi_pd(cij, cij));
-		}
-	}
-}
+		C[i*lda + j] += cij[0] + cij[1]
 \end{lstlisting}
 \caption{Basic block function with unrolling for \lstinline{k += 2}.}
 \label{fig:basic_sse}
@@ -228,29 +213,20 @@ We could increase the performance by unrolling both \lstinline{j += 2} and \lsti
 
 \begin{figure}[H]
 \begin{lstlisting}[mathescape]
-void do_block_unrolled_k (int lda, double* A, double* B, double* C)
-{
-	for (int i = 0; i < $b_i$; ++i)
-	{
-		for (int j = 0; j < $b_j$; j += 2)
-		{
-			__m128d cij_1 = _mm_setzero_pd();
-			__m128d cij_2 = _mm_setzero_pd();
+for i = 0 .. $b_i - 1$
+	for j = 0 .. $b_j - 1$
+		cij_1 = zero vector
+		cij_2 = zero vector
 
-			for (int k = 0; k < $b_k$; k += 2)
-			{
-				__m128d a =  _mm_load_pd(A + i*lda + k);
-				__m128d b_1 =  _mm_load_pd(B + j*lda + k);
-				__m128d b_2 =  _mm_load_pd(B + (j+1)*lda + k);
-				cij_1 = _mm_add_pd(cij_1, _mm_mul_pd(a, b_1)); 
-				cij_2 = _mm_add_pd(cij_2, _mm_mul_pd(a, b_2)); 
-			}
+		for k = 0 .. $b_k - 1$ step 2
+			a = load(A + i*lda + k)
+			b_1 = load(B + j*lda + k)
+			b_2 = load(B + (j+1)*lda + k)
+			cij_1 += a * b_1
+			cij_2 += a * b_2
 
-			C[i*lda + j] += _mm_cvtsd_f64(cij_1) + _mm_cvtsd_f64(_mm_unpackhi_pd(cij_1, cij_1));
-			C[i*lda + j + 1] += _mm_cvtsd_f64(cij_2) + _mm_cvtsd_f64(_mm_unpackhi_pd(cij_2, cij_2));
-		}
-	}
-}
+		C[i*lda + j] += cij_1[0] + cij_1[1]
+		C[i*lda + j + 1] = cij_2[0] + cij_2[1]
 \end{lstlisting}
 \caption{Optimized block function with unrolling for \lstinline{j += 2, k += 2}.}
 \label{fig:opt_1_sse}
@@ -272,9 +248,6 @@ This is what we did in the final version of our implementation. Increasing the s
 \end{figure}
 
 Figure~\ref{fig:sse_opt_graph} shows that, in most cases, unrolling for \lstinline{i += 2, j += 2, k += 4} performs best. Therefore, we use this version in our implementation.
-
-\subsection{Constant Propagation and Code Duplication}
-% duplicate code with constants instead of variable access
 
 \subsection{Parameter Tuning}
 Parameter tuning is the task of trying (brute-force) a set of parameters that affect the performance.
@@ -299,6 +272,12 @@ Figure~\ref{fig:param_results} shows the performance of the parameter-tuned vers
 	\caption{Performance of our parameter-tuned blocking version, in comparison to ATLAS.}
 	\label{fig:param_results}
 \end{figure}
+
+
+\subsection{Constant Propagation and Code Duplication}
+During parameter tuning we collected certain values $b_i$, $b_j$, and $b_k$ that perform well with certain matrix sizes. Instead of passing these parameters as arguments, we duplicate the source code with preprocessor macros and plug in the block size values as constants. This increases the size of the program and its compilation time, but also the performance. When dealing with known constants, the compiler can use some additional optimizations like further loop unrolling or \emph{strength reduction}, i.e. replacing expensive operations like \lstinline{i * 8} by less expensive operations like \lstinline{i << 3}.
+
+We also introduced variables for indices of \lstinline{A}, \lstinline{B}, and \lstinline{C}, instead of recomputing the position on every array access. These index variables are updated after running a loop. This can improve the performance a little bit, because a single addition may be cheaper than some multiplications.
 
 \newpage
 \section*{Appendix}
