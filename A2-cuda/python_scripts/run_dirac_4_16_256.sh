@@ -1,4 +1,4 @@
-pre = """#!/bin/csh
+#!/bin/csh
 # This a batch submission script for a CUDA Job runing on Dirac
 #  Submit this script using the command: qsub <script_name>
 #  Use the "qstat" command to check the status of a job.
@@ -110,24 +110,9 @@ date
 # The commands
 
 echo ""
-"""
 
-post = """echo ""
+./mmpy -n 256 -x 4 -y 16 -r 10
+echo ""
 echo ">>> Job Ends"
 
 date
-"""
-
-dims = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
-sizes = [256, 512, 2048]
-
-for x in dims:
-	for y in dims:
-		if x*y <= 1024:
-			for n in sizes:
-				f = open("run_dirac_" + str(x) + "_" + str(y) + "_" + str(n) + ".sh", "w")
-				f.write(pre + "\n")
-				f.write("./mmpy -n " + str(n) + " -x " + str(x) + " -y " + str(y) + " -r 10\n")
-				f.write(post)
-			f.close()
-
