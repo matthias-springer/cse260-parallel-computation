@@ -54,7 +54,7 @@
 #    Your job will end when it exceeds this time limit
 #
 #
-#PBS -l walltime=00:01:00
+#PBS -l walltime=00:05:00
 
 #
 # 2. *** Job name
@@ -111,7 +111,7 @@ date
 
 echo ""
 
-./mmpy -n 2048 -x 4 -y 8 -r 10
+./mmpy -n 2048 -x 4 -y 8 -r 5
 echo ""
 echo ">>> Job Ends"
 

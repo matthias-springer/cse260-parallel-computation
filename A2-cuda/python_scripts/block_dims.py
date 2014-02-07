@@ -54,7 +54,7 @@ pre = """#!/bin/csh
 #    Your job will end when it exceeds this time limit
 #
 #
-#PBS -l walltime=00:01:00
+#PBS -l walltime=00:05:00
 
 #
 # 2. *** Job name
@@ -119,7 +119,7 @@ date
 """
 
 dims = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
-sizes = [256, 512, 2048]
+sizes = [2048]
 
 for x in dims:
 	for y in dims:
@@ -127,7 +127,7 @@ for x in dims:
 			for n in sizes:
 				f = open("run_dirac_" + str(x) + "_" + str(y) + "_" + str(n) + ".sh", "w")
 				f.write(pre + "\n")
-				f.write("./mmpy -n " + str(n) + " -x " + str(x) + " -y " + str(y) + " -r 10\n")
+				f.write("./mmpy -n " + str(n) + " -x " + str(x) + " -y " + str(y) + " -r 5\n")
 				f.write(post)
 			f.close()
 
