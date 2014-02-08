@@ -1,0 +1,114 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+\usepackage{framed} % or, "mdframed"
+\usepackage[framed]{ntheorem}
+\usepackage{listings}
+\usepackage{color}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+
+\newframedtheorem{frm-thm}{Lemma}
+
+\usepackage[scale=1.0, left=1.0cm, right=1.0cm, top=1.865cm, bottom=0.865cm]{geometry}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{dred}{rgb}{0.545,0,0}
+\definecolor{dblue}{rgb}{0,0,0.545}
+\definecolor{lgrey}{rgb}{0.9,0.9,0.9}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\lstset{ 
+      backgroundcolor=\color{lgrey},  
+      basicstyle=\footnotesize \ttfamily \color{black} \bfseries,   
+      breakatwhitespace=false,       
+      breaklines=true,               
+      captionpos=b,                   
+      commentstyle=\color{dkgreen},   
+      deletekeywords={...},          
+      escapeinside={\%*}{*)},                  
+      frame=single,                  
+      keywordstyle=\color{purple},  
+      morekeywords={BRIEFDescriptorConfig,string,TiXmlNode,DetectorDescriptorConfigContainer,istringstream,cerr,exit}, 
+      identifierstyle=\color{black},
+      stringstyle=\color{blue},      
+      language=C,                
+      numbers=right,                 
+      numbersep=5pt,                  
+      numberstyle=\tiny\color{black}, 
+      rulecolor=\color{black},        
+      showspaces=false,               
+      showstringspaces=false,        
+      showtabs=false,                
+      stepnumber=1,                   
+      tabsize=5,                     
+      title=\lstname,                 
+    }
+
+
+\pagestyle{myheadings}
+\markright{CSE 260, Assignment 1 \hfill Andrew Conegliano, Matthias Springer\hfill}
+
+\begin{document}
+
+\title{Double-precision Matrix Multiply on CUDA  \\ \vspace{2 mm} {\large Parallel Computation (CSE 260), Assignment 2}}
+\date{\today}
+\author{Andrew Conegliano (A53053325) \and Matthias Springer (A99500782) \and GID G-338-665}
+\maketitle
+
+\subsection{Assumptions}
+The following assumptions apply within this work.
+
+\begin{itemize}
+	\item All matrices are square matrices.
+	\item All matrices consist of double-precision floating point values (64-bit doubles).
+\end{itemize}
+
+\subsection{Notation}
+%\end{tabular}
+In this work, we use the following notation and variable names.
+\begin{itemize}
+	\item $n$ is the size of one dimension of the matrices involved. I.e., every matrix has $n^2$ values.
+	\item When referring to matrices, $A$ and $B$ denote the source matrices and $C$ denotes the target matrix, i.e. $AB = C$.
+	\item $b_i$, $b_j$ and $b_k$ denote the block size for each \emph{dimension} $i$, $j$, and $k$, respectively\footnote{We tried multiple levels of blocking and it is evident from the context which level of blocking we are refering to.}.
+\end{itemize}
+
+\section*{Runtime Environment}
+We optimized our implementation for a specific runtime environment. All benchmarks and performance results are based on the following hardware and software.
+
+\subsection{Hardware (Dirac)}
+\begin{itemize}
+	\item 2 Nahalem Quad Core CPUs
+	\item 24 GB DDR3 RAM
+	\item 1 Tesla C2050 (Fermi) GPU
+	\begin{itemize}
+		\item 14 vector units $\times$ 32 cores = 448 total cores \@ 1.15 GHz
+		\item 3 GB DDR5 RAM, 2.625 GB usable due to ECC
+	\end{itemize}
+\end{itemize}
+
+\subsection{Software}
+
+\section{Basic Algorithm}
+
+\begin{figure}
+\begin{lstlisting}
+for i = 0 .. n - 1
+	for j = 0 .. n - 1
+		cij = C[i*n + j]
+
+		for k = 0 .. n - 1
+			cij += A[i*n+k] * B[k*n+j]
+
+		C[i*n+j] = cij
+\end{lstlisting}
+\caption{Naive matrix multiplication algorithm.}
+\label{fig:naive_mul}
+\end{figure}
+
+\end{document}
+
