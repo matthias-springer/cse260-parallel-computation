@@ -5,10 +5,10 @@
 #include "types.h"
 using namespace std;
 
-#define BLOCKDIM_X 4
-#define BLOCKDIM_Y 4
-#define BLOCK_X 4
-#define BLOCK_Y 4
+#define BLOCKDIM_X 32
+#define BLOCKDIM_Y 32
+#define BLOCK_X 32
+#define BLOCK_Y 32
 
 __global__ void matMul(int N, _DOUBLE_ *C, _DOUBLE_ *A, _DOUBLE_ *B) {
 

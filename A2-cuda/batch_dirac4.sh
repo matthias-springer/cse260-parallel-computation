@@ -113,10 +113,10 @@ date
 # The commands
 
 echo ""
-./mmpy1 -n 256 -x 1 -y 1 -r 1
-./mmpy1 -n 512 -x 1 -y 1 -r 1
-./mmpy1 -n 1024 -x 1 -y 1 -r 1
-./mmpy1 -n 2048 -x 1 -y 1 -r 1
+./mmpy4 -n 256 -x 4 -y 4 -r 1
+./mmpy4 -n 512 -x 4 -y 4 -r 1
+./mmpy4 -n 1024 -x 4 -y 4 -r 1
+./mmpy4 -n 2048 -x 4 -y 4 -r 1
 echo ""
 echo ">>> Job Ends"
 
