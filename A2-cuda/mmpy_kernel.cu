@@ -38,6 +38,6 @@ __global__ void matMul(int N, _DOUBLE_ *C, _DOUBLE_ *A, _DOUBLE_ *B) {
             __syncthreads();  
         }
         C[I * N + J] = c[0];
-        C[I16 * B + J] = c[1];
+        C[I16 * N + J] = c[1];
     }
 }
