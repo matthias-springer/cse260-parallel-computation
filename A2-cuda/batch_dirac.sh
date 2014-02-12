@@ -113,8 +113,8 @@ date
 # The commands
 
 echo ""
+./mmpy -n 256 -x 1 -y 512 -r 10
 ./mmpy -n 512 -x 1 -y 512 -r 10
-./mmpy -n 512 -x 1 -y 512 -r 100
 ./mmpy -n 768 -x 1 -y 512 -r 10
 ./mmpy -n 1024 -x 1 -y 512 -r 10
 echo ""
