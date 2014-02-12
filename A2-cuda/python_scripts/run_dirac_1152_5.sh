@@ -111,8 +111,8 @@ date
 
 echo ""
 
-setenv OMP_NUM_THREADS 2
-./mmpy -n 512 -r 10 -c 2
+setenv OMP_NUM_THREADS 5
+./mmpy -n 1152 -r 10 -c 5
 echo ""
 echo ">>> Job Ends"
 

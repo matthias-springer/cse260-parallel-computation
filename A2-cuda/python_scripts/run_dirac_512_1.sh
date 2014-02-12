@@ -54,7 +54,7 @@
 #    Your job will end when it exceeds this time limit
 #
 #
-#PBS -l walltime=00:01:00
+#PBS -l walltime=01:00:00
 
 #
 # 2. *** Job name
@@ -111,7 +111,8 @@ date
 
 echo ""
 
-./mmpy -n 1024 -x 512 -y 1 -r 10
+setenv OMP_NUM_THREADS 1
+./mmpy -n 512 -r 10 -c 1
 echo ""
 echo ">>> Job Ends"
 
