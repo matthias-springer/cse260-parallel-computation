@@ -54,7 +54,7 @@ pre = """#!/bin/csh
 #    Your job will end when it exceeds this time limit
 #
 #
-#PBS -l walltime=01:00:00
+#PBS -l walltime=00:05:00
 
 #
 # 2. *** Job name
