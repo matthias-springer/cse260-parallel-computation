@@ -101,7 +101,7 @@ NVCCFLAGS += $(BLOCKING)
 CFLAGS += $(BLOCKING)
 C++FLAGS += $(BLOCKING)
 
-APP=mmpy
+APP=mmpy_$(bx)_$(by)
 
 OBJECTS = mmpy.o  mmpy_host.o  genMatrix.o cmdLine.o Timer.o utils.o Report.o setGrid.o
 
