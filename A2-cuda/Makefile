@@ -87,9 +87,13 @@ NVCCFLAGS += --ptxas-options=-v
 
 ifdef bx
 	DIM_X = -DBLOCKDIM_X=$(bx)
+else
+	DIM_X = -DBLOCKDIM_X=16
 endif
 ifdef by
 	DIM_Y = -DBLOCKDIM_Y=$(by)
+else
+	DIM_Y = -DBLOCKDIM_Y=16
 endif
 
 BLOCKING = $(DIM_X) $(DIM_Y)
