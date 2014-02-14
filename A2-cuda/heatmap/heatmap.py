@@ -24,7 +24,10 @@ for line in lines:
 		bucket = 2
 	elif int(line.split()[1]) == 2048:
 		bucket = 3
-		
+	
+	print bucket
+	print int(math.log(x, 2))
+
 	results[bucket][int(math.log(x, 2))] = gf
 
 for n in range(4):

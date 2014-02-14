@@ -8,7 +8,7 @@ import math
 f = open("results.txt",'r')
 lines = f.readlines() 
 
-results = [[[0 for x in xrange(11)] for x in xrange(11)] for x in xrange(4)]
+results = [[[0 for x in xrange(11)] for x in xrange(11)] for x in xrange(3)]
 
 for line in lines:
 	x = float(line.split()[2])
@@ -34,7 +34,7 @@ F.clf()
 ZS = [1,2,3,4]
 
 grid = ImageGrid(F, 212,
-                      nrows_ncols = (1, 4),
+                      nrows_ncols = (1, 3),
                       direction="row",
                       axes_pad = 0.05,
                       add_all=True,
@@ -54,7 +54,7 @@ im = 0
 
 ctr = 0
 
-for n in [0,1,2,3]:
+for n in [0,1,2]:
     size = 2**(n+8)
     for x in xrange(11):
         for y in xrange(11):
