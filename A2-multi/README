@@ -1,0 +1,40 @@
+Building:
+The following arguments can be given with "make":
+
+gprof=1 : Compiles the code with the -g option to provide
+          symbol table information need for debugging with gdb
+
+multi=1 : Compiles the code such that all double precision quantities
+	   marked with the generic _DOUBLE_ type will be compiled in
+	   single precision
+
+Running:
+./mmpy [-n <matrix dim>]  [-r <# repititions>]
+
+This code uses the BLAS version which calls a highly optimized library
+
+The code will verify the correctness of matrix multiplication in verify
+(See verify.c)
+
+We use a Hilbert matrix; the square of a Hilbert Matrix is known in closed form
+Given an n x n Hilbert Matrix H(i,j)
+  H(I,j) = 1/(i+j-1)
+  It's easy to check if the multiplication is correct;
+  entry (i,j) of H * H is
+  Sum(k) { 1.0/(i+k-1)*(k+j-1) }
+
+
+To build this code, you'll need to modify the 'arch' file to
+set the compiler names and command line options
+
+The code needs the BLAS3 routine dgemm, which is provide in ATLAS
+If you want ot use another library, e.g. MKL or ACML,
+you'll need modify LIB_BLAS to point to your BLAS library,
+and to modify LDLIBS to set any libraries that the BLAS depends on
+
+Note that on Dirac, we can't just use the modules setting as
+we need to override the loader line.
+Before buidling the code, do the following
+
+setenv MKL "-L/usr/common/usg/mkl/10.2.2.025/lib/em64t -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -openmp -lpthread"
+

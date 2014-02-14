@@ -1,0 +1,10 @@
+pgi/12.9(12):ERROR:150: Module 'pgi/12.9' conflicts with the currently loaded module(s) 'intel/13.0.1'
+pgi/12.9(12):ERROR:102: Tcl command execution failed: conflict 	$name gcc intel
+
+ModuleCmd_Switch.c(172):ERROR:152: Module 'pgi' is currently not loaded
+pgi/12.9(12):ERROR:150: Module 'pgi/12.9' conflicts with the currently loaded module(s) 'intel/13.0.1'
+pgi/12.9(12):ERROR:102: Tcl command execution failed: conflict 	$name gcc intel
+
+ModuleCmd_Switch.c(172):ERROR:152: Module 'pgi' is currently not loaded
+OMP: Warning #80: OMP_NUM_THREADS="0": value too small.
+OMP: Info #104: OMP_NUM_THREADS value "1" will be used.

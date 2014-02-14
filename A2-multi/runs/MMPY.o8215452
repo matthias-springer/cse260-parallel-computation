@@ -1,0 +1,235 @@
+Warning: no access to tty (Bad file descriptor).
+Thus no job control in this shell.
+PATH=/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/common/usg/cuda/5.5/bin:/usr/common/usg/mysql/5.1.63/bin:/usr/common/usg/altd/1.0/bin:/usr/common/usg/openmpi/1.4.5/pgi/bin:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/bin/intel64:/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/syscom/opt/torque/4.2.6/bin:/usr/syscom/opt/moab/7.2.6-r12-b152/bin:/usr/syscom/nsg/sbin:/usr/syscom/nsg/bin:/usr/share/Modules/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin
+PBSCOREDUMP=1
+PBS_O_QUEUE=dirac_reg
+PBS_O_HOME=/global/homes/m/mspringr
+PBS_O_LOGNAME=mspringr
+PBS_O_PATH=/usr/common/usg/cuda/5.5/bin:/usr/common/usg/mysql/5.1.63/bin:/usr/common/usg/altd/1.0/bin:/usr/common/usg/openmpi/1.4.5/pgi/bin:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/bin/intel64:/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/syscom/opt/torque/4.2.6/bin:/usr/syscom/opt/moab/7.2.6-r12-b152/bin:/usr/syscom/nsg/sbin:/usr/syscom/nsg/bin:/usr/share/Modules/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin
+PBS_O_MAIL=/var/spool/mail/mspringr
+PBS_O_SHELL=/bin/csh
+PBS_O_SUBMIT_FILTER=/usr/syscom/nsg/sbin/submit_filter
+PBS_O_WORKDIR=/global/u2/m/mspringr/cse260/A2-multi
+PBS_O_HOST=cvrsvc02-ib
+PBS_O_SERVER=cvrsvc09-ib
+REMOTEHOST=128.54.142.62
+CUDA_PATH=/usr/common/usg/cuda/5.5
+MANPATH=/usr/common/usg/man:/usr/common/mss/man:/usr/common/nsg/man:/usr/common/usg/man:/usr/common/mss/man:/usr/common/nsg/man:/usr/common/usg/cuda/5.5/man:/usr/common/usg/mysql/5.1.63/share/man:/usr/common/usg/openmpi/1.4.5/pgi/share/man:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/man/en_US:/usr/common/usg/man:/usr/common/mss/man:/usr/common/nsg/man:/usr/syscom/opt/torque/4.2.6/share/man:/usr/syscom/opt/moab/7.2.6-r12-b152/share/man:/usr/syscom/nsg/man:/usr/share/Modules/man:/usr/share/man
+HOSTNAME=dirac42
+INTEL_LICENSE_FILE=/usr/common/usg/intel/licenses/license.dat
+HOST=dirac42
+TERM=xterm
+SHELL=/bin/csh
+GSCRATCH2=/global/scratch2/sd/mspringr
+CUDA_INCLUDE=-I/usr/common/usg/cuda/5.5/include
+TMPDIR=/global/scratch2/sd/mspringr
+SSH_CLIENT=128.54.142.62 59033 22
+LIBRARY_PATH=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/compiler/lib/intel64
+ALT_LINKER=/usr/common/usg/altd/1.0/bin/ld
+ALTD_SELECT_ON=0
+ALTD_VERBOSE=0
+SSH_TTY=/dev/pts/7
+MKL_LP64=-L/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
+GROUP=mspringr
+USER=mspringr
+LD_LIBRARY_PATH=/usr/common/usg/cuda/5.5/lib64:/usr/common/usg/cuda/5.5/lib:/usr/common/usg/mysql/5.1.63/lib/mysql:/usr/common/usg/gcc/default/lib64:/usr/common/usg/python/2.7.1-20110310/lib:/usr/syscom/opt/torque/default/lib:/usr/common/usg/openmpi/1.4.5/pgi/lib:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/compiler/lib/intel64:/usr/syscom/opt/torque/4.2.6/lib:/usr/syscom/nsg/lib:/usr/common/usg/openssl/0.9.81/lib
+ALTD_ON=1
+HOSTTYPE=x86_64-linux
+FORT_BUFFERED=yes
+GSCRATCH=/global/scratch2/sd/mspringr
+NLSPATH=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/compiler/lib/intel64/locale/%l_%t/%N
+MAIL=/var/spool/mail/mspringr
+MKL_LIBDIR=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64
+CUDA_LIB_PATH=/usr/common/usg/cuda/5.5/lib64:/usr/common/usg/cuda/5.5/lib
+CUDA_LIB=-L/usr/common/usg/cuda/5.5/lib
+OMPI_DIR=/usr/common/usg/openmpi/1.4.5/pgi
+INPUTRC=/etc/inputrc
+PWD=/global/homes/m/mspringr
+_LMFILES_=/usr/share/Modules/modulefiles/modules:/usr/syscom/nsg/modulefiles/nsg/1.2.0:/usr/syscom/nsg/opt/modulefiles/moab/7.2.6-r12-b152:/usr/syscom/nsg/opt/modulefiles/torque/4.2.6:/usr/common/usg/Modules/modulefiles/intel/13.0.1:/usr/common/usg/Modules/modulefiles/openmpi/1.4.5:/usr/common/usg/Modules/modulefiles/altd/1.0:/usr/common/usg/Modules/modulefiles/usg-default-modules/1.0:/usr/common/usg/Modules/modulefiles/cuda/5.5:/usr/common/usg/Modules/modulefiles/mkl/13.0.1
+MOABHOMEDIR=/usr/syscom/opt/moab/7.2.6-r12-b152
+MODULEPATH=/usr/share/Modules/modulefiles:/etc/modulefiles:/usr/common/usg/Modules/modulefiles:/usr/syscom/nsg/modulefiles:/usr/syscom/nsg/opt/modulefiles:/usr/common/acts/Modules/modulefiles:/usr/common/ftg/Modules/modulefiles:/usr/common/graphics/Modules/modulefiles:/usr/common/jgi/Modules/modulefiles:/usr/common/tig/Modules/modulefiles
+NSG_HOME=/usr/syscom/nsg
+LOADEDMODULES=modules:nsg/1.2.0:moab/7.2.6-r12-b152:torque/4.2.6:intel/13.0.1:openmpi/1.4.5:altd/1.0:usg-default-modules/1.0:cuda/5.5:mkl/13.0.1
+MKL_HOME=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl
+CUDA_LIB64=-L/usr/common/usg/cuda/5.5/lib64
+MKL_INC=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/include
+SHLVL=2
+HOME=/global/homes/m/mspringr
+MKL_ILP64=-L/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core
+OSTYPE=linux
+ALTD_PATH=/usr/common/usg/altd/1.0
+FC=ifort
+VENDOR=unknown
+MACHTYPE=x86_64
+LOGNAME=mspringr
+SSH_CONNECTION=128.54.142.62 59033 128.55.69.10 22
+MODULESHOME=/usr/share/Modules
+LESSOPEN=|/usr/bin/lesspipe.sh %s
+MKL=-L/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64
+CC=icc
+NERSC_HOST=carver
+PUB=/global/u2/b/baden/cse260-wi14
+SCRATCH=/global/scratch2/sd/mspringr
+G_BROKEN_FILENAMES=1
+IDB=idb
+_=/usr/syscom/opt/torque/4.2.6/bin/qsub
+PBS_JOBNAME=MMPY
+PBS_JOBID=8215452.cvrsvc09-ib
+PBS_QUEUE=dirac_reg
+PBS_JOBCOOKIE=8EDE98FB080CFA674F8EE5F14B57F081
+PBS_NODENUM=0
+PBS_TASKNUM=1
+PBS_MOMPORT=15003
+PBS_NODEFILE=/usr/syscom/opt/torque/server/nodes/dirac42/aux//8215452.cvrsvc09-ib
+PBS_GPUFILE=/usr/syscom/opt/torque/server/nodes/dirac42/aux//8215452.cvrsvc09-ibgpu
+PBS_MICFILE=/usr/syscom/opt/torque/server/nodes/dirac42/aux//8215452.cvrsvc09-ibmic
+PBS_WALLTIME=300
+PBS_NUM_NODES=1
+PBS_NUM_PPN=8
+PBS_VERSION=TORQUE-4.2.6
+PBS_VNODENUM=0
+PBS_NP=8
+PBS_ENVIRONMENT=PBS_BATCH
+ENVIRONMENT=BATCH
+ALTD_SELECT_OFF_USERS=
+ALTD_SELECT_USERS=
+Wed Feb 12 00:40:52 PST 2014
+*** Job Starts
+PATH=/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/common/usg/cuda/5.5/bin:/usr/common/usg/mysql/5.1.63/bin:/usr/common/usg/altd/1.0/bin:/usr/common/usg/openmpi/1.4.5/pgi/bin:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/bin/intel64:/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/syscom/opt/torque/4.2.6/bin:/usr/syscom/opt/moab/7.2.6-r12-b152/bin:/usr/syscom/nsg/sbin:/usr/syscom/nsg/bin:/usr/share/Modules/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin
+PBSCOREDUMP=1
+PBS_O_QUEUE=dirac_reg
+PBS_O_HOME=/global/homes/m/mspringr
+PBS_O_LOGNAME=mspringr
+PBS_O_PATH=/usr/common/usg/cuda/5.5/bin:/usr/common/usg/mysql/5.1.63/bin:/usr/common/usg/altd/1.0/bin:/usr/common/usg/openmpi/1.4.5/pgi/bin:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/bin/intel64:/usr/common/usg/bin:/usr/common/mss/bin:/usr/common/nsg/bin:/usr/syscom/opt/torque/4.2.6/bin:/usr/syscom/opt/moab/7.2.6-r12-b152/bin:/usr/syscom/nsg/sbin:/usr/syscom/nsg/bin:/usr/share/Modules/bin:/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin
+PBS_O_MAIL=/var/spool/mail/mspringr
+PBS_O_SHELL=/bin/csh
+PBS_O_SUBMIT_FILTER=/usr/syscom/nsg/sbin/submit_filter
+PBS_O_WORKDIR=/global/u2/m/mspringr/cse260/A2-multi
+PBS_O_HOST=cvrsvc02-ib
+PBS_O_SERVER=cvrsvc09-ib
+REMOTEHOST=128.54.142.62
+CUDA_PATH=/usr/common/usg/cuda/5.5
+MANPATH=/usr/common/usg/man:/usr/common/mss/man:/usr/common/nsg/man:/usr/common/usg/man:/usr/common/mss/man:/usr/common/nsg/man:/usr/common/usg/cuda/5.5/man:/usr/common/usg/mysql/5.1.63/share/man:/usr/common/usg/openmpi/1.4.5/pgi/share/man:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/man/en_US:/usr/common/usg/man:/usr/common/mss/man:/usr/common/nsg/man:/usr/syscom/opt/torque/4.2.6/share/man:/usr/syscom/opt/moab/7.2.6-r12-b152/share/man:/usr/syscom/nsg/man:/usr/share/Modules/man:/usr/share/man
+HOSTNAME=dirac42
+INTEL_LICENSE_FILE=/usr/common/usg/intel/licenses/license.dat
+HOST=dirac42
+TERM=xterm
+SHELL=/bin/csh
+GSCRATCH2=/global/scratch2/sd/mspringr
+CUDA_INCLUDE=-I/usr/common/usg/cuda/5.5/include
+TMPDIR=/global/scratch2/sd/mspringr
+SSH_CLIENT=128.54.142.62 59033 22
+LIBRARY_PATH=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/compiler/lib/intel64
+ALT_LINKER=/usr/common/usg/altd/1.0/bin/ld
+ALTD_SELECT_ON=0
+ALTD_VERBOSE=0
+SSH_TTY=/dev/pts/7
+MKL_LP64=-L/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
+GROUP=mspringr
+USER=mspringr
+LD_LIBRARY_PATH=/usr/common/usg/cuda/5.5/lib64:/usr/common/usg/cuda/5.5/lib:/usr/common/usg/mysql/5.1.63/lib/mysql:/usr/common/usg/gcc/default/lib64:/usr/common/usg/python/2.7.1-20110310/lib:/usr/syscom/opt/torque/default/lib:/usr/common/usg/openmpi/1.4.5/pgi/lib:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64:/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/compiler/lib/intel64:/usr/syscom/opt/torque/4.2.6/lib:/usr/syscom/nsg/lib:/usr/common/usg/openssl/0.9.81/lib
+ALTD_ON=1
+HOSTTYPE=x86_64-linux
+FORT_BUFFERED=yes
+GSCRATCH=/global/scratch2/sd/mspringr
+NLSPATH=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/compiler/lib/intel64/locale/%l_%t/%N
+MAIL=/var/spool/mail/mspringr
+MKL_LIBDIR=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64
+CUDA_LIB_PATH=/usr/common/usg/cuda/5.5/lib64:/usr/common/usg/cuda/5.5/lib
+CUDA_LIB=-L/usr/common/usg/cuda/5.5/lib
+OMPI_DIR=/usr/common/usg/openmpi/1.4.5/pgi
+INPUTRC=/etc/inputrc
+PWD=/global/homes/m/mspringr/cse260/A2-multi
+_LMFILES_=/usr/share/Modules/modulefiles/modules:/usr/syscom/nsg/modulefiles/nsg/1.2.0:/usr/syscom/nsg/opt/modulefiles/moab/7.2.6-r12-b152:/usr/syscom/nsg/opt/modulefiles/torque/4.2.6:/usr/common/usg/Modules/modulefiles/intel/13.0.1:/usr/common/usg/Modules/modulefiles/openmpi/1.4.5:/usr/common/usg/Modules/modulefiles/altd/1.0:/usr/common/usg/Modules/modulefiles/usg-default-modules/1.0:/usr/common/usg/Modules/modulefiles/cuda/5.5:/usr/common/usg/Modules/modulefiles/mkl/13.0.1
+MOABHOMEDIR=/usr/syscom/opt/moab/7.2.6-r12-b152
+MODULEPATH=/usr/share/Modules/modulefiles:/etc/modulefiles:/usr/common/usg/Modules/modulefiles:/usr/syscom/nsg/modulefiles:/usr/syscom/nsg/opt/modulefiles:/usr/common/acts/Modules/modulefiles:/usr/common/ftg/Modules/modulefiles:/usr/common/graphics/Modules/modulefiles:/usr/common/jgi/Modules/modulefiles:/usr/common/tig/Modules/modulefiles
+NSG_HOME=/usr/syscom/nsg
+LOADEDMODULES=modules:nsg/1.2.0:moab/7.2.6-r12-b152:torque/4.2.6:intel/13.0.1:openmpi/1.4.5:altd/1.0:usg-default-modules/1.0:cuda/5.5:mkl/13.0.1
+MKL_HOME=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl
+CUDA_LIB64=-L/usr/common/usg/cuda/5.5/lib64
+MKL_INC=/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/include
+SHLVL=2
+HOME=/global/homes/m/mspringr
+MKL_ILP64=-L/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core
+OSTYPE=linux
+ALTD_PATH=/usr/common/usg/altd/1.0
+FC=ifort
+VENDOR=unknown
+MACHTYPE=x86_64
+LOGNAME=mspringr
+SSH_CONNECTION=128.54.142.62 59033 128.55.69.10 22
+MODULESHOME=/usr/share/Modules
+LESSOPEN=|/usr/bin/lesspipe.sh %s
+MKL=-L/usr/common/usg/intel/13.0.028/composer_xe_2013.1.117/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64
+CC=icc
+NERSC_HOST=carver
+PUB=/global/u2/b/baden/cse260-wi14
+SCRATCH=/global/scratch2/sd/mspringr
+G_BROKEN_FILENAMES=1
+IDB=idb
+_=/usr/syscom/opt/torque/4.2.6/bin/qsub
+PBS_JOBNAME=MMPY
+PBS_JOBID=8215452.cvrsvc09-ib
+PBS_QUEUE=dirac_reg
+PBS_JOBCOOKIE=8EDE98FB080CFA674F8EE5F14B57F081
+PBS_NODENUM=0
+PBS_TASKNUM=1
+PBS_MOMPORT=15003
+PBS_NODEFILE=/usr/syscom/opt/torque/server/nodes/dirac42/aux//8215452.cvrsvc09-ib
+PBS_GPUFILE=/usr/syscom/opt/torque/server/nodes/dirac42/aux//8215452.cvrsvc09-ibgpu
+PBS_MICFILE=/usr/syscom/opt/torque/server/nodes/dirac42/aux//8215452.cvrsvc09-ibmic
+PBS_WALLTIME=300
+PBS_NUM_NODES=1
+PBS_NUM_PPN=8
+PBS_VERSION=TORQUE-4.2.6
+PBS_VNODENUM=0
+PBS_NP=8
+PBS_ENVIRONMENT=PBS_BATCH
+ENVIRONMENT=BATCH
+ALTD_SELECT_OFF_USERS=
+ALTD_SELECT_USERS=
+>>> Job starts
+Wed Feb 12 00:40:52 PST 2014
+
+
+n: 672
+nreps: 10
+
+Verifying Matrix multiplication using BLAS:
+  Answers matched exactly
+
+
+
+Times:
+        BLAS: 0.061356 sec. [tg = 2.02187e-10]
+
+Gflop rate:  9.891844
+
+
+      N   Reps    GF     t_blas   tg_blas    cores
+@    672    10 9.891844 0.061356 0.000000 0
+
+
+>>> Job Ends
+Wed Feb 12 00:40:53 PST 2014
+
+ + --------------------------------------------------------------------------
+ +        Job name: MMPY
+ +          Job Id: 8215452.cvrsvc09-ib
+ +          System: dirac
+ +     Queued Time:  Tue Feb 11 23:49:01 2014
+ +      Start Time:  Wed Feb 12 00:40:51 2014
+ + Completion Time:  Wed Feb 12 00:40:53 2014
+ +            User: mspringr
+ +           Group: mspringr
+ +        MOM Host: dirac42
+ +           Queue: dirac_reg
+ +  Req. Resources: neednodes=1:ppn=8:fermi,nodes=1:ppn=8:fermi,walltime=00:05:00
+ +  Used Resources: cput=00:00:01,mem=23828kb,vmem=155708kb,walltime=00:00:02
+ +     Acct String: gpgpu
+ +   PBS_O_WORKDIR: /global/u2/m/mspringr/cse260/A2-multi
+ +     Submit Args:  run_dirac_672_0.sh
+ +        Job Exit: 0
+ +      Nodes used: dirac42-ib  
+ + --------------------------------------------------------------------------
+

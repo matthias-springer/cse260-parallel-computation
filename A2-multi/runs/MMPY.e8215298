@@ -1,0 +1,14 @@
+pgi/12.9(12):ERROR:150: Module 'pgi/12.9' conflicts with the currently loaded module(s) 'intel/13.0.1'
+pgi/12.9(12):ERROR:102: Tcl command execution failed: conflict 	$name gcc intel
+
+utility.c(2215):ERROR:50: Cannot open file '/usr/common/usg/Modules/modulefiles/altd/1.0' for 'reading'
+altd(8):ERROR:106: Magic cookie '#%Module' missing in '/usr/common/usg/Modules/modulefiles/altd/1.0'
+altd(8):ERROR:105: Unable to locate a modulefile for 'altd'
+ModuleCmd_Switch.c(172):ERROR:152: Module 'pgi' is currently not loaded
+pgi/12.9(12):ERROR:150: Module 'pgi/12.9' conflicts with the currently loaded module(s) 'intel/13.0.1'
+pgi/12.9(12):ERROR:102: Tcl command execution failed: conflict 	$name gcc intel
+
+utility.c(2215):ERROR:50: Cannot open file '/usr/common/usg/Modules/modulefiles/altd/1.0' for 'reading'
+altd(8):ERROR:106: Magic cookie '#%Module' missing in '/usr/common/usg/Modules/modulefiles/altd/1.0'
+altd(8):ERROR:105: Unable to locate a modulefile for 'altd'
+ModuleCmd_Switch.c(172):ERROR:152: Module 'pgi' is currently not loaded
