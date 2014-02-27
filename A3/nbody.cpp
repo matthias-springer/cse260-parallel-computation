@@ -7,6 +7,8 @@
 #include "common.h"
 #include "Plotting.h"
 #include "World.h"
+       #include <sys/types.h>
+       #include <unistd.h>
 
 #ifdef _MPI_
 // Conditional compilation for MPI
@@ -53,6 +55,9 @@ int main( int argc, char **argv )
                 // may differ
     int px, py; // processor geometry
 
+printf("PID %d ready for attach\n", getpid());
+int aaa;
+scanf("%d\n", &aaa);
 
 #ifdef _MPI_
  MPI_Init(&argc,&argv);
@@ -79,10 +84,10 @@ int main( int argc, char **argv )
     }
 
     int nprocs=1, myrank=0;
-#ifdef _MPI_
+//#ifdef _MPI_
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-#endif
+//#endif
 
 
     FILE *fsave;

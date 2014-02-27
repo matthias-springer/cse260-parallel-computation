@@ -31,6 +31,7 @@ void Bin::AddParticle(particle_t* p)
 
 void Bin::AddInboundParticle(particle_t* p)
 {	
+	printf("%f\n", p->x);
 	inboundParticles.push_back(p);
 }
 
@@ -137,6 +138,7 @@ void Bin::move_particles(double dt)
 void Bin::UpdateParticlesBin()
 {
 	int dummy = -1;
+	MPI_Request bla;
 
 	// Move to another Bin if needed
 	for( ParticleIterator particle = binParticles.begin(); particle != binParticles.end(); ) {
@@ -153,12 +155,12 @@ void Bin::UpdateParticlesBin()
 		if (newI == -1) {
 			// send to left neighbor
 			// tag specifies the j index
-			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE, world->my_rank - 1, j, MPI_COMM_WORLD, NULL);
+			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE, world->my_rank - 1, j, MPI_COMM_WORLD, &bla);
 			particle = binParticles.erase(particle);
 		}
 		else if (newI == world->bins_length) {
 			// send to right neighbor
-			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE,  world->my_rank + 1, j, MPI_COMM_WORLD, NULL);
+			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE,  world->my_rank + 1, j, MPI_COMM_WORLD, &bla);
 			particle = binParticles.erase(particle);
 		}
 		else {
@@ -175,12 +177,12 @@ void Bin::UpdateParticlesBin()
 	if (world->my_rank > 0) {
 		// have left neigbor
 		// negative tags are not allowed, so just use a j index that is too big
-		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank - 1, world->dimension, MPI_COMM_WORLD, NULL);
+		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank - 1, world->dimension, MPI_COMM_WORLD, &bla);
 	}
 
 	if (world->my_rank < world->cpu_count - 1) {
 		// have right neighbor
-		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank + 1, world->dimension, MPI_COMM_WORLD, NULL);
+		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank + 1, world->dimension, MPI_COMM_WORLD, &bla);
 	}
 
 	// TODO: deallocate memory for sent particles
@@ -248,8 +250,10 @@ void Bin::AddGhostParticle(particle_t * particle) {
 }
 
 void Bin::SendAsGhost(int targetRank, int tag) {
+	MPI_Request bla;
+
 	for (int i = 0; i < binParticles.size(); i++) {
-		MPI_Isend(binParticles[i], sizeof(particle_t), MPI_BYTE, targetRank, tag, MPI_COMM_WORLD, NULL);
+		MPI_Isend(binParticles[i], sizeof(particle_t), MPI_BYTE, targetRank, tag, MPI_COMM_WORLD, &bla);
 	}
 }
 

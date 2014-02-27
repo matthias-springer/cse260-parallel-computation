@@ -93,10 +93,12 @@ void World::apply_forces()
 //
 void World::move_particles(double dt)
 {
+	MPI_Request bla;
+
   for(int i=0; i < bins_length*dimension; ++i)
     local_bins[i].move_particles(dt);
 
-
+printf("AFTER MOVE on %i\n", my_rank);
 //
 // After moving the particles, we check each particle
 // to see if it moved outside its current bin
@@ -105,6 +107,8 @@ void World::move_particles(double dt)
 //
   for(int i=0; i < bins_length*dimension; ++i)
     local_bins[i].UpdateParticlesBin();
+
+printf("AFTER UPDATE PARTICLES BIN on %i\n", my_rank);
 
 
 //
@@ -117,6 +121,7 @@ void World::move_particles(double dt)
   for(int i=0; i < bins_length*dimension; ++i)
    local_bins[i].UpdateInboundParticles();
 
+printf("AFTER UPDATE INBOUND PARTICLES on %i\n", my_rank);
 
 	// update ghost zones
 
@@ -127,7 +132,7 @@ void World::move_particles(double dt)
 		for (int j = 0; j < bins_length; ++j) {
 			local_bins[j*bins_length + 0].SendAsGhost(my_rank - 1, j);
 		}
-		MPI_Isend(&dummy, 1, MPI_INT, my_rank - 1, dimension, MPI_COMM_WORLD, NULL);
+		MPI_Isend(&dummy, 1, MPI_INT, my_rank - 1, dimension, MPI_COMM_WORLD, &bla);
 	}
 
 	if (my_rank < cpu_count - 1) {
@@ -135,7 +140,7 @@ void World::move_particles(double dt)
 		for (int j = 0; j < bins_length; ++j) {
 			local_bins[j*bins_length + bins_length - 1].SendAsGhost(my_rank + 1, j);
 		}
-		MPI_Isend(&dummy, 1, MPI_INT, my_rank + 1, dimension, MPI_COMM_WORLD, NULL);
+		MPI_Isend(&dummy, 1, MPI_INT, my_rank + 1, dimension, MPI_COMM_WORLD, &bla);
 	}
 
 
@@ -204,6 +209,7 @@ void World::move_particles(double dt)
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
     for( int step = 0; step < nsteps; step++ ) {
+			printf(" !!!!!!!!!!! BEGINNING OF LOOP !!!!!!!!!!!!!!\n");
     //
     //  compute forces
     //
@@ -240,13 +246,15 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 
 	// TODO: send data and collect data from all bins
 	int dummy = -1;
+	
+	MPI_Request bla;
 
 	if (my_rank != 0) {
 		for (int i = 0; i < bins_length*dimension; ++i) {
 			// same functionality as sending as ghost
 			local_bins[i].SendAsGhost(0, i);
 		}
-		MPI_Isend(&dummy, 1, MPI_INT, 0, dimension*dimension, MPI_COMM_WORLD, NULL);
+		MPI_Isend(&dummy, 1, MPI_INT, 0, dimension*dimension, MPI_COMM_WORLD, &bla);
 	}
 	else {
 		bins = new Bin[dimension*dimension];
