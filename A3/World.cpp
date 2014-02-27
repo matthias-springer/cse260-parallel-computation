@@ -239,6 +239,52 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
     }
 
 	// TODO: send data and collect data from all bins
+	int dummy = -1;
+
+	if (my_rank != 0) {
+		for (int i = 0; i < bins_length*dimension; ++i) {
+			// same functionality as sending as ghost
+			local_bins[i].SendAsGhost(0, i);
+		}
+		MPI_Isend(&dummy, 1, MPI_INT, 0, dimension*dimension, MPI_COMM_WORLD, NULL);
+	}
+	else {
+		bins = new Bin[dimension*dimension];
+
+		// insert from local storage (rank 0)
+		for (int i = 0; i < bins_length*dimension; ++i) {
+			int particle_i = i % bins_length;
+			int particle_j = i / bins_length;
+
+			for (int j = 0; j < local_bins[i].binParticles.size(); ++j) {
+				bins[particle_j*dimension + particle_i + left_bound].AddGhostParticle(local_bins[i].binParticles[j]);
+			}
+		}
+
+		MPI_Status status;
+		for (int r = 1; r < cpu_count; ++r) {
+			int r_left_bound = (int) (ceil(dimension / cpu_count) * r);
+			int r_right_bound = (int) (min((int) (ceil(dimension / cpu_count) * (r + 1)), dimension));
+			int r_bins_length = r_right_bound - r_left_bound;
+
+			do {
+				particle_t * incoming_particle = (particle_t *) malloc(sizeof(particle_t));
+				MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, r, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+				if (status.MPI_TAG == dimension*dimension) {
+					// insert to global bins
+					int particle_i = status.MPI_TAG % r_bins_length;
+					int particle_j = status.MPI_TAG / r_bins_length;
+					
+					// just want to add a particle, use ghost method nvm
+					bins[particle_j*dimension + particle_i + r_left_bound].AddGhostParticle(incoming_particle);
+				}
+				else {
+					free(incoming_particle);
+				}
+			} while (status.MPI_TAG != dimension);
+		}
+	}
 	
 }
 
