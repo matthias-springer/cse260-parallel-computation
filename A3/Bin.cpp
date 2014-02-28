@@ -31,7 +31,7 @@ void Bin::AddParticle(particle_t* p)
 
 void Bin::AddInboundParticle(particle_t* p)
 {	
-	printf("%f\n", p->x);
+//	printf("%f\n", p->x);
 	inboundParticles.push_back(p);
 }
 
@@ -126,9 +126,19 @@ void Bin::move_particles(double dt)
         while( (*particle)->y < 0 || (*particle)->y > size ) {
             (*particle)->y  = (*particle)->y < 0 ? -(*particle)->y : 2*size-(*particle)->y;
             (*particle)->vy = -(*particle)->vy;
-        }		
+        }
+
+			//DebugCheckParticle((*particle), 5);		
     }	
 	
+}
+
+void Bin::DebugCheckParticle(particle_t * particle, int ref) {
+	int i = (int) (particle->x / world->binWidth);
+	int newI = i - world->left_bound;
+
+	if (newI >= world->bins_length)
+    printf("ERR!! [%i] particle stays local on %d in bin %d, _\n", ref, world->my_rank, newI);
 }
 
 //
@@ -148,22 +158,31 @@ void Bin::UpdateParticlesBin()
 		
 		int newI = i - world->left_bound;
 		int newJ = j;
-		int newBin = j*world->bins_length + i;
+		int newBin = newJ*world->bins_length + newI;
 
 		// TODO: check if particle passed through multiple bins
 		
-		if (newI == -1) {
+		if (newI < 0) {
 			// send to left neighbor
 			// tag specifies the j index
-			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE, world->my_rank - 1, j, MPI_COMM_WORLD, &bla);
+			int target_rank = i / (world->max_bins_length);
+
+//			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE, world->my_rank - 1, j, MPI_COMM_WORLD, &bla);
+			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE, target_rank, j, MPI_COMM_WORLD, &bla);
 			particle = binParticles.erase(particle);
 		}
-		else if (newI == world->bins_length) {
+		else if (newI >= world->bins_length) {
 			// send to right neighbor
-			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE,  world->my_rank + 1, j, MPI_COMM_WORLD, &bla);
+			int target_rank = i / (world->max_bins_length);
+
+//			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE,  world->my_rank + 1, j, MPI_COMM_WORLD, &bla);
+			MPI_Isend((*particle), sizeof(particle_t), MPI_BYTE, target_rank, j, MPI_COMM_WORLD, &bla);
 			particle = binParticles.erase(particle);
 		}
 		else {
+			DebugCheckParticle((*particle), 1);
+			//if (newI >= world->bins_length)
+			//	printf("ERR!! particle stays local on %d in bin %d, %d\n", world->my_rank, newI, newJ);
 			if(i != I || j != J) {
 				world->local_bins[newBin].AddInboundParticle((*particle));
 				particle = binParticles.erase(particle);
@@ -174,58 +193,75 @@ void Bin::UpdateParticlesBin()
 	}
 
 	// send dummy particle to tell neighbors that all particles have been sent
-	if (world->my_rank > 0) {
+//	if (world->my_rank > 0) {
 		// have left neigbor
 		// negative tags are not allowed, so just use a j index that is too big
-		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank - 1, world->dimension, MPI_COMM_WORLD, &bla);
+//		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank - 1, world->dimension, MPI_COMM_WORLD, &bla);
+//	}
+
+//	if (world->my_rank < world->cpu_count - 1) {
+		// have right neighbor
+//		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank + 1, world->dimension, MPI_COMM_WORLD, &bla);
+//	}
+
+	for (int cpu = 0; cpu < world->cpu_count; ++cpu) {
+		if (cpu != world->my_rank) {
+			MPI_Isend(&dummy, 1, MPI_INT, cpu, world->dimension, MPI_COMM_WORLD, &bla);
+		}
 	}
 
-	if (world->my_rank < world->cpu_count - 1) {
-		// have right neighbor
-		MPI_Isend(&dummy, 1, MPI_INT, world->my_rank + 1, world->dimension, MPI_COMM_WORLD, &bla);
-	}
 
 	// TODO: deallocate memory for sent particles
 	
 	// recevice
-	if (world->my_rank > 0) {
+//	if (world->my_rank > 0) {
 		// receive from left neighbor
-		MPI_Status status;
+//		MPI_Status status;
 
-		do {
-			particle_t * incoming_particle = (particle_t *) malloc(sizeof(particle_t));
-			MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, world->my_rank - 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+//		do {
+//			particle_t * incoming_particle = (particle_t *) malloc(sizeof(particle_t));
+//			MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, world->my_rank - 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-			if (status.MPI_TAG < world->dimension) {
+//			if (status.MPI_TAG < world->dimension) {
 				// status.MPI_TAG is the j coordinate
 				// receive from left neighbor => i=0
-				int newBin = status.MPI_TAG*world->bins_length + 0;
-				world->local_bins[newBin].AddInboundParticle(incoming_particle);	
-			}
-			else {
-				free(incoming_particle);
-			}
+//				int newBin = status.MPI_TAG*world->bins_length + 0;
+//				DebugCheckParticle(incoming_particle, 2);
+//				world->local_bins[newBin].AddInboundParticle(incoming_particle);	
+//			}
+//			else {
+//				free(incoming_particle);
+//			}
 
-		} while (status.MPI_TAG != world->dimension);
-	}
-
-	if (world->my_rank < world->cpu_count - 1) {
+//		} while (status.MPI_TAG != world->dimension);
+//	}
+	for (int cpu = 0; cpu < world->cpu_count; ++cpu) {
+		if (cpu != world->my_rank) {
 		// has right neighbor
 		MPI_Status status;
 
 		do {
 			particle_t * incoming_particle = (particle_t *) malloc(sizeof(particle_t));
-			MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, world->my_rank + 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, cpu, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
 			if (status.MPI_TAG < world->dimension) {
-				// receive from right neighbor => i=bin_length-1
-				int newBin = status.MPI_TAG*world->bins_length + world->bins_length - 1;
+				// calculate new bin for particle
+                int i = (int) (incoming_particle->x / world->binWidth);
+                int j  = (int) (incoming_particle->y / world->binHeight);
+                int newI = i - world->left_bound;
+                int newJ = j;
+								int newBin = newJ*world->bins_length + newI;
+
+//				int newBin = status.MPI_TAG*world->bins_length + world->bins_length - 1;
+
+				DebugCheckParticle(incoming_particle, 3);
 				world->local_bins[newBin].AddInboundParticle(incoming_particle);
 			}
 			else {
 				free(incoming_particle);
 			}
 		} while (status.MPI_TAG != world->dimension);
+	}
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);

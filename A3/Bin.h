@@ -43,6 +43,7 @@ public:
   void move_particles(double dt);
   void UpdateParticlesBin();
   void UpdateInboundParticles();
+	void DebugCheckParticle(particle_t * particle, int ref);
 };
 
 

@@ -31,10 +31,16 @@ World::World(double size, int nx, int ny, int np, int n, particle_t* particles, 
 	SortParticles(n, particles);
 
 		
-	left_bound = (int) (ceil(nx / num_cpus) * my_rank);
-	right_bound = (int) (min((int) (ceil(nx / num_cpus) * (my_rank + 1)), nx));
+	left_bound = (int) (ceil((1.0 * nx) / num_cpus) * my_rank);
+	right_bound = (int) (min((int) (ceil((1.0 * nx) / num_cpus) * (my_rank + 1)), nx));
 
 	bins_length = right_bound - left_bound;
+
+  int left_bound_0 = (int) (ceil((1.0 * nx) / num_cpus) * 0);
+  int right_bound_0 = (int) (min((int) (ceil((1.0 * nx) / num_cpus) * (0 + 1)), nx));
+
+  max_bins_length = right_bound_0 - left_bound_0;
+
 	dimension = nx;
 
 	local_bins = new Bin[bins_length * nx];
@@ -98,7 +104,7 @@ void World::move_particles(double dt)
   for(int i=0; i < bins_length*dimension; ++i)
     local_bins[i].move_particles(dt);
 
-printf("AFTER MOVE on %i\n", my_rank);
+//printf("AFTER MOVE on %i\n", my_rank);
 //
 // After moving the particles, we check each particle
 // to see if it moved outside its current bin
@@ -108,7 +114,7 @@ printf("AFTER MOVE on %i\n", my_rank);
   for(int i=0; i < bins_length*dimension; ++i)
     local_bins[i].UpdateParticlesBin();
 
-printf("AFTER UPDATE PARTICLES BIN on %i\n", my_rank);
+//printf("AFTER UPDATE PARTICLES BIN on %i\n", my_rank);
 
 
 //
@@ -121,7 +127,7 @@ printf("AFTER UPDATE PARTICLES BIN on %i\n", my_rank);
   for(int i=0; i < bins_length*dimension; ++i)
    local_bins[i].UpdateInboundParticles();
 
-printf("AFTER UPDATE INBOUND PARTICLES on %i\n", my_rank);
+//printf("AFTER UPDATE INBOUND PARTICLES on %i\n", my_rank);
 
 	// update ghost zones
 
@@ -209,7 +215,7 @@ printf("AFTER UPDATE INBOUND PARTICLES on %i\n", my_rank);
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
     for( int step = 0; step < nsteps; step++ ) {
-			printf(" !!!!!!!!!!! BEGINNING OF LOOP !!!!!!!!!!!!!!\n");
+		//	printf(" !!!!!!!!!!! BEGINNING OF LOOP !!!!!!!!!!!!!!\n");
     //
     //  compute forces
     //

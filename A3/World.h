@@ -29,6 +29,7 @@ public:
 	int dimension;
 	int my_rank;
 	int cpu_count;
+	int max_bins_length;
 
 	int binCount; // number of bins
 	double _size; 
