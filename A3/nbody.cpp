@@ -7,8 +7,6 @@
 #include "common.h"
 #include "Plotting.h"
 #include "World.h"
-       #include <sys/types.h>
-       #include <unistd.h>
 
 #ifdef _MPI_
 // Conditional compilation for MPI
@@ -36,6 +34,7 @@ double density = 0.0005;
 double  mass =    0.01;
 double cutoff =  0.01;
 double min_r  =  (cutoff/100);
+particle_t *particles;
 
 int cmdLine( int argc, char **argv, int&n, int& nt, int& nsteps, int& ntlot, int& sd, char** savename, int& nx, int& ny, int& px, int& py);
 void SimulateParticles(int nsteps, particle_t *particles, int n, int nt, int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny );
@@ -43,8 +42,8 @@ void RepNorms(double uMax,double vMax,double uL2,double vL2);
 void ReportPerformance(double Tp, int nt, int px, int py, int N, int nsteps, int nx, double uMax, double vMax, double uL2, double vL2);
 
 int main( int argc, char **argv )
-{    
-    int nt;     // number of threads
+{  
+		int nt;     // number of threads
     int n;      // # of particles
     int nsteps; // # of timesteps
     int nplot;  // Plotting frequency
@@ -55,9 +54,6 @@ int main( int argc, char **argv )
                 // may differ
     int px, py; // processor geometry
 
-printf("PID %d ready for attach\n", getpid());
-int aaa;
-scanf("%d\n", &aaa);
 
 #ifdef _MPI_
  MPI_Init(&argc,&argv);
@@ -84,10 +80,10 @@ scanf("%d\n", &aaa);
     }
 
     int nprocs=1, myrank=0;
-//#ifdef _MPI_
+#ifdef _MPI_
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-//#endif
+#endif
 
 
     FILE *fsave;
@@ -98,7 +94,7 @@ scanf("%d\n", &aaa);
         fsave = savename ? fopen( savename, "w" ) : NULL;
     }
 
-    particle_t *particles = new particle_t[ n ];
+    particles = new particle_t[ n ];
     assert(particles);
     
     init_particles( n, particles,sd);
@@ -124,7 +120,7 @@ scanf("%d\n", &aaa);
     //
     // Bin the particles into nx by ny regions
     //
-    World world(size, nx, ny, nt, n, particles, nprocs, myrank);
+    World world(size, nx, ny, nt, n, particles);
   
     //
     //  simulate a number of time steps

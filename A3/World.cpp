@@ -8,14 +8,67 @@
 #include <iostream>
 #include "World.h"
 #include "Bin.h"
-#include "mpi.h"
 #include <math.h>
 
-World::World(double size, int nx, int ny, int np, int n, particle_t* particles, int num_cpus, int rank) : _size(size), _nx(nx), _ny(ny), _np(np), _n(n)
-{
-	my_rank = rank;
-	cpu_count = num_cpus;
+extern particle_t * particles;
 
+World::int cpu_x_of_particle(particle_t* particle) {
+	return global_bin_x_of_particle(particle) / max_x_bins;
+}
+
+World::int cpu_y_of_particle(particle_t* particle) {
+	return global_bin_y_of_particle(particle) / max_y_bins;
+}
+
+World::int local_bin_x_of_particle(particle_t* particle) {
+	return global_bin_x_of_particle(particle) % max_x_bins;
+}
+
+World::int local_bin_y_of_particle(particle_t* particle) {
+	return global_bin_y_of_particle(particle) % max_y_bins;
+}
+
+World::int cpu_of_particle(particle_t* particle) {
+	return cpu_y_of_particle(particle) * thread_x_dim + cpu_x_of_particle(particle);
+}
+
+World::int local_bin_of_particle(particle_t* particle) {
+	return local_bin_y_of_particle(particle) * bin_x_count + local_bin_x_of_particle(particle);
+}
+
+World::int global_bin_x_of_particle(particle_t* particle) {
+	return (int) (particle->x / binWidth);
+}
+
+World::int global_bin_y_of_particle(particle_t* particle) {
+	return (int) (particle->y / binHeight);
+}
+
+World::int cpu_of_bin(int x, int y) {
+	int cpu_x = x / max_x_bins;
+	int cpu_y = y / max_y_bins;
+	return cpu_y * thread_x_dim + cpu_x;
+}
+
+World::void setup_thread() {
+	my_rank_y = my_rank / thread_x_dim;
+	my_rank_x = my_rank % thread_x_dim;
+
+	max_x_bins = ceil(((float) _nx) / thread_x_dim);
+	max_y_bins = ceil(((float) _ny) / thread_y_dim);
+
+	bin_x_min = my_rank * max_x_bins;
+	bin_x_max = min((my_rank + 1) * max_x_bins, _nx);
+  bin_y_min = my_rank * max_y_bins;
+  bin_y_max = min((my_rank + 1) * max_y_bins, _ny);
+
+	bin_x_count = bin_x_max - bin_x_min;
+	bin_y_count = bin_y_max - bin_y_min;
+	bin_count = bin_y_count * bin_x_count;
+}
+
+World::World(double size, int nx, int ny, int np, int n, particle_t* particles, int rank, int num_threads, int threads_x, int threads_y) : _size(size), _nx(nx), _ny(ny), _np(np), _n(n), my_rank(rank), thread_count(num_threads), thread_x_dim(threads_x), thread_y_dim(threads_y)
+{
 	binCount = nx * ny;
 	bins = new Bin[binCount];
 	binWidth = size / (double) nx;
@@ -25,49 +78,13 @@ World::World(double size, int nx, int ny, int np, int n, particle_t* particles, 
                 int binID = j*nx + i;	      
                 bins[binID].I = i;
                 bins[binID].J = j;
+								bins[binID].my_rank = cpu_of_bin(i, j);
                 bins[binID].world = this;
             }
 	}
 	SortParticles(n, particles);
 
-		
-	left_bound = (int) (ceil((1.0 * nx) / num_cpus) * my_rank);
-	right_bound = (int) (min((int) (ceil((1.0 * nx) / num_cpus) * (my_rank + 1)), nx));
-
-	bins_length = right_bound - left_bound;
-
-  int left_bound_0 = (int) (ceil((1.0 * nx) / num_cpus) * 0);
-  int right_bound_0 = (int) (min((int) (ceil((1.0 * nx) / num_cpus) * (0 + 1)), nx));
-
-  max_bins_length = right_bound_0 - left_bound_0;
-
-	dimension = nx;
-
-	local_bins = new Bin[bins_length * nx];
-
-	// copy local bins
-	for (int i = 0; i < bins_length; ++i) {
-		for (int j = 0; j < ny; ++j) {
-			local_bins[j*bins_length + i] = bins[j*nx + i + bins_length*rank];
-		}
-	}
-
-	// copy ghost bins
-	if (left_bound > 0) {
-		left_ghost_bins = new Bin[nx];
-
-		for (int j = 0; j < ny; ++j) {
-			left_ghost_bins[j] = bins[j*nx + bins_length*rank - 1];
-		}
-	}
-
-	if (right_bound < nx) {
-		right_ghost_bins = new Bin[nx];
-
-		for (int j = 0; j < ny; ++j) {
-			right_ghost_bins[j] = bins[j*nx + bins_length*rank + bins_length];
-		}
-	}
+	setup_thread();
 }
 
 //
@@ -89,9 +106,11 @@ void World::SortParticles(int n, particle_t* particles)
 //
 void World::apply_forces()
 {
-  for(int i=0; i < bins_length*dimension; ++i)
-    local_bins[i].apply_forces();
- 
+	for (int x = bin_x_min; x < bin_x_max; x++) {
+	  for(int y = bin_y_min; y < bin_y_max; y++) {
+		  bins[y*_nx + x].apply_forces();
+		}
+	}
 }
 
 //
@@ -99,23 +118,23 @@ void World::apply_forces()
 //
 void World::move_particles(double dt)
 {
-	MPI_Request bla;
+  for (int x = bin_x_min; x < bin_x_max; x++) {
+    for(int y = bin_y_min; y < bin_y_max; y++) {
+	    bins[y*_nx + x].move_particles(dt);
+		}
+	}
 
-  for(int i=0; i < bins_length*dimension; ++i)
-    local_bins[i].move_particles(dt);
-
-//printf("AFTER MOVE on %i\n", my_rank);
 //
 // After moving the particles, we check each particle
 // to see if it moved outside its current bin
 // If, so we append to the inbound partcle list for the new bin
 // As written, this code is not threadsafe
 //
-  for(int i=0; i < bins_length*dimension; ++i)
-    local_bins[i].UpdateParticlesBin();
-
-//printf("AFTER UPDATE PARTICLES BIN on %i\n", my_rank);
-
+  for (int x = bin_x_min; x < bin_x_max; x++) {
+    for(int y = bin_y_min; y < bin_y_max; y++) {
+	    bins[y*_nx + x].UpdateParticlesBin();
+		}
+	}
 
 //
 // After we've updated all the inbound lists
@@ -123,72 +142,14 @@ void World::move_particles(double dt)
 // any particles on the inbound list
 // This work parallelizes
 //
-
-  for(int i=0; i < bins_length*dimension; ++i)
-   local_bins[i].UpdateInboundParticles();
-
-//printf("AFTER UPDATE INBOUND PARTICLES on %i\n", my_rank);
-
-	// update ghost zones
-
-	int dummy = -1;
-	// send ghost_bins
-	if (my_rank > 0) {
-		// has left neighbor, send bins with i=0
-		for (int j = 0; j < bins_length; ++j) {
-			local_bins[j*bins_length + 0].SendAsGhost(my_rank - 1, j);
+  for (int x = bin_x_min; x < bin_x_max; x++) {
+    for(int y = bin_y_min; y < bin_y_max; y++) {
+	    bins[y*_nx + x].UpdateInboundParticles();
 		}
-		MPI_Isend(&dummy, 1, MPI_INT, my_rank - 1, dimension, MPI_COMM_WORLD, &bla);
 	}
 
-	if (my_rank < cpu_count - 1) {
-		// has right neighbor, send bins with i=bin_length-1
-		for (int j = 0; j < bins_length; ++j) {
-			local_bins[j*bins_length + bins_length - 1].SendAsGhost(my_rank + 1, j);
-		}
-		MPI_Isend(&dummy, 1, MPI_INT, my_rank + 1, dimension, MPI_COMM_WORLD, &bla);
-	}
-
-
-	// receive ghost_bins
-	// TODO: free memory
-	left_ghost_bins = new Bin[dimension];
-	right_ghost_bins = new Bin[dimension];
-
-	if (my_rank > 0) {
-		// receive from left neighbor, bins with i=bins_length-1
-		MPI_Status status;
-		
-		do {
-			particle_t * incoming_particle = (particle_t *) malloc(sizeof(particle_t));
-			MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, my_rank - 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-			if (status.MPI_TAG < dimension) {
-				left_ghost_bins[status.MPI_TAG].AddGhostParticle(incoming_particle);
-			}
-			else {
-				free(incoming_particle);
-			}
-		} while (status.MPI_TAG != dimension);
-	}
- 
-	if (my_rank < cpu_count - 1) {
-		// receive from right neighbor, bins with i=0
-		MPI_Status status;
-
-		do {
-			particle_t * incoming_particle = (particle_t *) malloc(sizeof(particle_t));
-			MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, my_rank + 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-			if (status.MPI_TAG < dimension) {
-				right_ghost_bins[status.MPI_TAG].AddGhostParticle(incoming_particle);
-			}
-			else {
-				free(incoming_particle);
-			}
-		} while (status.MPI_TAG != dimension);
-	}
-
+	// TODO: sync ghost bins
+	
 #ifdef DEBUG
 //
 // May come in handy during debugging
@@ -215,7 +176,6 @@ void World::move_particles(double dt)
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
     for( int step = 0; step < nsteps; step++ ) {
-		//	printf(" !!!!!!!!!!! BEGINNING OF LOOP !!!!!!!!!!!!!!\n");
     //
     //  compute forces
     //
@@ -249,57 +209,6 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	if( fsave && (step%SAVEFREQ) == 0 )
 	    save( fsave, n, particles );
     }
-
-	// TODO: send data and collect data from all bins
-	int dummy = -1;
-	
-	MPI_Request bla;
-
-	if (my_rank != 0) {
-		for (int i = 0; i < bins_length*dimension; ++i) {
-			// same functionality as sending as ghost
-			local_bins[i].SendAsGhost(0, i);
-		}
-		MPI_Isend(&dummy, 1, MPI_INT, 0, dimension*dimension, MPI_COMM_WORLD, &bla);
-	}
-	else {
-		bins = new Bin[dimension*dimension];
-
-		// insert from local storage (rank 0)
-		for (int i = 0; i < bins_length*dimension; ++i) {
-			int particle_i = i % bins_length;
-			int particle_j = i / bins_length;
-
-			for (int j = 0; j < local_bins[i].binParticles.size(); ++j) {
-				bins[particle_j*dimension + particle_i + left_bound].AddGhostParticle(local_bins[i].binParticles[j]);
-			}
-		}
-
-		MPI_Status status;
-		for (int r = 1; r < cpu_count; ++r) {
-			int r_left_bound = (int) (ceil(dimension / cpu_count) * r);
-			int r_right_bound = (int) (min((int) (ceil(dimension / cpu_count) * (r + 1)), dimension));
-			int r_bins_length = r_right_bound - r_left_bound;
-
-			do {
-				particle_t * incoming_particle = (particle_t *) malloc(sizeof(particle_t));
-				MPI_Recv(incoming_particle, sizeof(particle_t), MPI_BYTE, r, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-				if (status.MPI_TAG == dimension*dimension) {
-					// insert to global bins
-					int particle_i = status.MPI_TAG % r_bins_length;
-					int particle_j = status.MPI_TAG / r_bins_length;
-					
-					// just want to add a particle, use ghost method nvm
-					bins[particle_j*dimension + particle_i + r_left_bound].AddGhostParticle(incoming_particle);
-				}
-				else {
-					free(incoming_particle);
-				}
-			} while (status.MPI_TAG != dimension);
-		}
-	}
-	
 }
 
 

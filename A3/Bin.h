@@ -32,18 +32,17 @@ public:
   				 // We use this list to keep track of
 				 // all incoming migrating particles
   int I, J;  	// Index for this bin
+	int my_rank;
+
   World* world; // the world object used to access other bins
     
   void AddParticle(particle_t* p);
   void AddInboundParticle(particle_t* p);
-	void AddGhostParticle(particle_t * particle);
-	void SendAsGhost(int targetRank, int tag);
   void apply_forces();
   void apply_forces(ParticleList& reactors, ParticleList& actors);
   void move_particles(double dt);
   void UpdateParticlesBin();
   void UpdateInboundParticles();
-	void DebugCheckParticle(particle_t * particle, int ref);
 };
 
 

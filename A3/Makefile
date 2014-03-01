@@ -23,10 +23,10 @@ C++FLAGS 	+= $(WARNINGS)
 
 C++LINK		= $(C++)
 
-C++FLAGS += $(OPTIMIZATION) -O0 -ggdb
+C++FLAGS += $(OPTIMIZATION)
 
 # Enables MPI compilation
-mpi = 1
+# mpi = 1
 
 # Use the parallel print facility
 # ppf = 1
