@@ -8,6 +8,7 @@
 #include <iostream>
 #include "World.h"
 #include "Bin.h"
+#include "mpi.h"
 #include <math.h>
 
 extern particle_t * particles;
@@ -67,6 +68,18 @@ World::void setup_thread() {
 	bin_count = bin_y_count * bin_x_count;
 }
 
+#define BUFFER_SIZE 630
+
+typedef struct send_buffer {
+	int size;
+	particle_t particles[BUFFER_SIZE];
+} send_buffer;
+
+send_buffer* send_buffers;
+int* send_buffer_index;
+int next_send_buffer;
+int num_buffers;
+
 World::World(double size, int nx, int ny, int np, int n, particle_t* particles, int rank, int num_threads, int threads_x, int threads_y) : _size(size), _nx(nx), _ny(ny), _np(np), _n(n), my_rank(rank), thread_count(num_threads), thread_x_dim(threads_x), thread_y_dim(threads_y)
 {
 	binCount = nx * ny;
@@ -84,7 +97,21 @@ World::World(double size, int nx, int ny, int np, int n, particle_t* particles, 
 	}
 	SortParticles(n, particles);
 
+	for (int i = 0; i < n; i++) {
+		(particles + i)->tag = i;
+	}
+
 	setup_thread();
+
+	num_buffers = (int) ceil(((float) n) / BUFFER_SIZE) + num_threads;
+	send_buffers = new send_buffer*[num_buffers];
+	send_buffer_index = new int*[num_threads];
+
+	for (int i = 0; i < num_threads; ++i) {
+		send_buffer_index[i] = i;
+	}
+
+	next_send_buffer = num_threads;
 }
 
 //
@@ -111,6 +138,56 @@ void World::apply_forces()
 		  bins[y*_nx + x].apply_forces();
 		}
 	}
+}
+
+void World::send_buffers() {
+	for (int i = 0; i < thread_count; i++) {
+		if (i == my_rank) continue;
+
+		MPI_Request request;
+		send_buffer* target_buffer = send_buffers + send_buffer_index[i];
+
+		MPI_Isend(target_buffer, sizeof(int) + sizeof(particle_t) * target_buffer->size, MPI_BYTE, i, 0, MPI_COMM_WORLD, &request);
+	}
+}
+
+void World::reset_buffers() {
+	for (int i = 0; i < num_buffers; ++i) {
+		send_buffers[i]->size = 0;
+	}
+
+	for (int i = 0; i < num_threads; ++i) {
+		send_buffer_index[i] = i;
+	}
+
+	next_send_buffer = thread_count;
+}
+
+void World::receive_moving_particles() {
+	int non_full_buffers = 0;
+	send_buffer buffer;
+
+	do {
+		MPI_Status status;
+		MPI_Recv(&buffer, sizeof(send_buffer), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+		// put partices into memory and bins
+		for (int i = 0; i < buffer.size; i++) {
+			particle_t * particle =  buffer.particles + i;
+			memcpy(particles + buffer.particles[i].tag, particle);
+
+	    int i = (int) (particle->x / binWidth);
+		  int j  = (int) (particle->y / binHeight);
+			int newBin = j*world->_nx + i;
+
+			bins[newBin].AddParticle(particle);
+		}
+
+		if (buffer.size < BUFFER_SIZE) {
+			non_full_buffers++;
+		}
+	} while (non_full_buffers < thread_count - 1);
+
 }
 
 //
@@ -189,6 +266,11 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
     //
 	move_particles(dt);
 
+	send_buffers();
+	receive_moving_particles();
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	reset_buffers();
 
 	if (nplot && ((step % nplot ) == 0)){
 

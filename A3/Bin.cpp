@@ -1,5 +1,6 @@
 #include "Bin.h"
 #include "World.h"
+#include "mpi.h"
 #include <list>
 #include <math.h>
 #include <iostream>
@@ -12,6 +13,10 @@ extern double cutoff2;
 extern double mass;
 extern double size;
 extern double min_r;
+
+extern send_buffer** send_buffers;
+extern int* next_send_buffer;
+
 
 // May come in handy when debugging
 inline bool is_inside(double x, double y, const Rect& r)
@@ -30,7 +35,24 @@ void Bin::AddInboundParticle(particle_t* p)
 		inboundParticles.push_back(p);
 	}
 	else {
-		// TODO: MPI_Isend
+		send_buffer* target_buffer = send_buffers + send_buffer_index[my_rank];
+		memcpy(target_buffer->particles + target_buffer->size++, p, sizeof(particle_t));
+		
+		if (target->size == BUFFER_SIZE) {
+			MPI_Request request;
+			MPI_Isend(target_buffer, sizeof(send_buffer), MPI_BYTE, my_rank, 0, MPI_COMM_WORLD, &request);
+			send_buffer_index[my_rank] = next_send_buffer++;
+
+			if (next_send_buffer > num_buffers + 1) {
+				printf("die die die\n");
+				exit(1);
+			}
+		}
+		else if (target->size > BUFFER_SIZE) {
+			// TODO: remove
+			printf("die die die\n");
+			exit(1);
+		}
 	}
 }
 

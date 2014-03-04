@@ -15,6 +15,9 @@ public:
 	void apply_forces();
 	void move_particles(double dt);
 	void SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt );
+	void receive_moving_particles();
+	void reset_buffers();
+	void send_buffers();
 
 	int cpu_x_of_particle(particle_t* particle);
 	int cpu_y_of_particle(particle_t* particle);
