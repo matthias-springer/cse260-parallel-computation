@@ -28,6 +28,8 @@ public:
 	int global_bin_x_of_particle(particle_t* particle);
 	int global_bin_y_of_particle(particle_t* particle);
 	int cpu_of_bin(int x, int y);
+	int bin_of_bin(int x, int y);
+	int cpu_of_cpu(int x, int y);
 
 	void setup_thread();
 

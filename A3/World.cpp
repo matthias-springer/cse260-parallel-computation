@@ -45,6 +45,14 @@ World::int global_bin_y_of_particle(particle_t* particle) {
 	return (int) (particle->y / binHeight);
 }
 
+World::int bin_of_bin(int x, int y) {
+	return y*_nx + x;
+}
+
+World::int cpu_of_cpu(int x, int y) {
+	return y*thread_x_dim + x;
+}
+
 World::int cpu_of_bin(int x, int y) {
 	int cpu_x = x / max_x_bins;
 	int cpu_y = y / max_y_bins;
@@ -249,6 +257,62 @@ void World::move_particles(double dt)
   if(particleCount != _n)
     cout << "particle count = " << particleCount << endl;
 #endif
+}
+
+void World::send_ghost_particles() {
+	// order: ul, u, up, l, r, dl, d, dr
+	
+	if (my_rank_x > 0 && my_rank_y > 0) {
+		bins[bin_of_bin(bin_x_min, bin_y_min)].send_as_ghost(my_rank_x - 1, my_rank_y - 1);
+		flush_send_buffer(cpu_of_cpu(my_rank_x - 1, my_rank_y - 1));
+	}
+
+	if (my_rank_y > 0) {
+		for (int x = bin_x_min; x < bin_x_max; ++x) {
+			bins[bin_of_bin(x, bin_y_min)].send_as_ghost(my_rank_x, my_rank_y - 1);
+		}
+
+		flush_send_buffer(cpu_of_cpu(my_rank_x, my_rank_y - 1));
+	}
+
+	if (my_rank_y > 0 && my_rank_x < thread_x_dim - 1) {
+		bins[bin_of_bin(bin_x_min, bin_y_max - 1)].send_as_ghost(my_rank_x + 1, my_rank_y - 1);
+		flush_send_buffer(cpu_of_cpu(my_rank_x + 1, my_rank_y - 1));
+	}
+
+	if (my_rank_x > 0) {
+		for (int y = bin_y_min; y < bin_y_max; ++y) {
+			bins[bin_of_bin(bin_x_min, y)].send_as_ghost(my_rank_x - 1, my_rank_y);
+		}
+
+		flush_send_buffer(cpu_of_cpu(my_rank_x - 1, my_rank_y));
+	}
+
+	if (my_rank_x < thread_x_dim - 1) { 
+		for (int y = 0; y < bin_y_max; ++y) {
+			bins[bin_of_bin(bin_x_max - 1, y)].send_as_ghost(my_rank_x + 1, my_rank_y);
+		}
+
+		flush_send_buffer(cpu_of_cpu(my_rank_x + 1, my_rank_y));
+	}
+
+	if (my_rank_x > 0 && my_rank_y < thread_y_dim - 1) {
+		bins[bin_of_bin(bin_x_min, bin_y_max - 1)].send_as_ghost(my_rank_x - 1, my_rank_y + 1);
+		flush_send_buffer(cpu_of_cpu(my_rank_x - 1, my_rank_y + 1));
+	}
+
+	if (my_rank_y < thread_y_dim - 1) {
+		for (int x = bin_x_min; x < bin_x_max; ++x) {
+			bins[bin_of_bin(x, bin_y_max - 1)].send_as_ghost(my_rank_x, my_rank_y + 1);
+		}
+
+		flush_send_buffer(cpu_of_cpu(my_rank_x, my_rank_y + 1));
+	}
+
+	if (my_rank_x < thread_x_dim - 1 && my_rank_y < thread_y_dim - 1) {
+		bins[bin_of_bin(bin_x_max - 1, bin_y_max - 1)].send_as_ghost(my_rank_x + 1, my_rank_y + 1);
+		flush_send_buffer(cpu_of_cpu(my_rank_x + 1, my_rank_y + 1));
+	}
 }
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
