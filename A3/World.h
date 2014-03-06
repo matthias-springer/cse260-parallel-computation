@@ -17,7 +17,7 @@ public:
 	void SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt );
 	void receive_moving_particles();
 	void reset_buffers();
-	void send_buffers();
+	void send_ghost_particles();
 
 	int cpu_x_of_particle(particle_t* particle);
 	int cpu_y_of_particle(particle_t* particle);
@@ -30,9 +30,14 @@ public:
 	int cpu_of_bin(int x, int y);
 	int bin_of_bin(int x, int y);
 	int cpu_of_cpu(int x, int y);
+	void send_particle(particle_t* particle, int target);
+	void flush_send_buffers();
+	void flush_send_buffer(int buffer);
+	void receive_particles(int cpus);
+	void check_send_ghost_particle(particle_t* particle, int target_rank, int bin_x, int bin_y);
 
 	void setup_thread();
-
+	
 	Bin* bins; // bins inside the world
 	int binCount; // number of bins
 	double _size; 

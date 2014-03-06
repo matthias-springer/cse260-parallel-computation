@@ -1,6 +1,6 @@
 #include "Bin.h"
 #include "World.h"
-#include "mpi.h"
+//#include "mpi.h"
 #include <list>
 #include <math.h>
 #include <iostream>
@@ -13,6 +13,13 @@ extern double cutoff2;
 extern double mass;
 extern double size;
 extern double min_r;
+
+#define BUFFER_SIZE 630
+
+typedef struct send_buffer {
+  int size;
+  particle_t particles[BUFFER_SIZE];
+} send_buffer;
 
 extern send_buffer** send_buffers;
 extern int* next_send_buffer;
@@ -35,24 +42,14 @@ void Bin::AddInboundParticle(particle_t* p)
 		inboundParticles.push_back(p);
 	}
 	else {
-		send_buffer* target_buffer = send_buffers + send_buffer_index[my_rank];
-		memcpy(target_buffer->particles + target_buffer->size++, p, sizeof(particle_t));
-		
-		if (target->size == BUFFER_SIZE) {
-			MPI_Request request;
-			MPI_Isend(target_buffer, sizeof(send_buffer), MPI_BYTE, my_rank, 0, MPI_COMM_WORLD, &request);
-			send_buffer_index[my_rank] = next_send_buffer++;
+		world->send_particle(p, my_rank);
+		world->check_send_ghost_particle(p, my_rank, I, J);
+	}
+}
 
-			if (next_send_buffer > num_buffers + 1) {
-				printf("die die die\n");
-				exit(1);
-			}
-		}
-		else if (target->size > BUFFER_SIZE) {
-			// TODO: remove
-			printf("die die die\n");
-			exit(1);
-		}
+void Bin::send_as_ghost(int target) {
+	for (int i = 0; i < binParticles.size(); i++) {
+		world->send_particle(binParticles[i], target);
 	}
 }
 

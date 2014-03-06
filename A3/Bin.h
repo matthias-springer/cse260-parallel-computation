@@ -43,6 +43,7 @@ public:
   void move_particles(double dt);
   void UpdateParticlesBin();
   void UpdateInboundParticles();
+	void send_as_ghost(int target);
 };
 
 

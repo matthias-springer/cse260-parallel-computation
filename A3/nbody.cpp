@@ -7,6 +7,8 @@
 #include "common.h"
 #include "Plotting.h"
 #include "World.h"
+       #include <sys/types.h>
+       #include <unistd.h>
 
 #ifdef _MPI_
 // Conditional compilation for MPI
@@ -54,10 +56,12 @@ int main( int argc, char **argv )
                 // may differ
     int px, py; // processor geometry
 
+printf("PID %d ready for attach\n", getpid());
 
 #ifdef _MPI_
  MPI_Init(&argc,&argv);
 #endif
+
 
 #ifdef _MPI_
     int local_OK =  cmdLine( argc, argv, n, nt, nsteps, nplot, sd,  &savename, nx, ny, px, py);
@@ -66,7 +70,7 @@ int main( int argc, char **argv )
 #else
     int OK =  cmdLine( argc, argv, n, nt, nsteps, nplot, sd,  &savename, nx, ny, px, py);
 #endif
-	
+
     // If there was a parsing error, exit
     if (!OK)
         ABEND();
@@ -84,7 +88,7 @@ int main( int argc, char **argv )
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 #endif
-
+		//sleep(30);
 
     FILE *fsave;
     // Only process 0 saves the particle positions.
@@ -120,7 +124,8 @@ int main( int argc, char **argv )
     //
     // Bin the particles into nx by ny regions
     //
-    World world(size, nx, ny, nt, n, particles);
+		printf("Creating world on rank %i\n", myrank);
+    World world(size, nx, ny, nt, n, particles, myrank, nprocs, px, py);
   
     //
     //  simulate a number of time steps
