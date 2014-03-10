@@ -18,6 +18,7 @@ public:
 	void receive_moving_particles();
 	void reset_buffers();
 	void send_ghost_particles();
+	void clear_ghost_particles();
 
 	int cpu_x_of_particle(particle_t* particle);
 	int cpu_y_of_particle(particle_t* particle);

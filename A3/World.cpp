@@ -66,10 +66,10 @@ void World::setup_thread() {
 	max_x_bins = ceil(((float) _nx) / thread_x_dim);
 	max_y_bins = ceil(((float) _ny) / thread_y_dim);
 
-	bin_x_min = my_rank * max_x_bins;
-	bin_x_max = min((my_rank + 1) * max_x_bins, _nx);
-  bin_y_min = my_rank * max_y_bins;
-  bin_y_max = min((my_rank + 1) * max_y_bins, _ny);
+	bin_x_min = my_rank_x * max_x_bins;
+	bin_x_max = min((my_rank_x + 1) * max_x_bins, _nx);
+  bin_y_min = my_rank_y * max_y_bins;
+  bin_y_max = min((my_rank_y + 1) * max_y_bins, _ny);
 
 	bin_x_count = bin_x_max - bin_x_min;
 	bin_y_count = bin_y_max - bin_y_min;
@@ -188,7 +188,7 @@ void World::receive_particles(int cpus) {
       int index_j  = (int) (particle->y / binHeight);
       int newBin = index_j*_nx + index_i;
 
-      bins[newBin].AddParticle(particle);
+      bins[newBin].AddParticle(particles + buffer.particles[i].tag);
     }
 
     if (buffer.size < BUFFER_SIZE) {
@@ -265,7 +265,7 @@ void World::move_particles(double dt)
 void World::send_particle(particle_t* particle, int target) {
 //		printf("scheduling particle for send\n");
     send_buffer* target_buffer = send_buffers + send_buffer_index[target];
-    printf("[%i] sending to target %i (buffer_index=%i), using send buffer with index %i / %i\n", my_rank, target, target_buffer->size, send_buffer_index[target], num_buffers);
+//    printf("[%i] sending to target %i (buffer_index=%i), using send buffer with index %i / %i\n", my_rank, target, target_buffer->size, send_buffer_index[target], num_buffers);
     memcpy(target_buffer->particles + target_buffer->size++, particle, sizeof(particle_t));
 
     if (target_buffer->size == BUFFER_SIZE) {
@@ -310,23 +310,23 @@ void World::check_send_ghost_particle(particle_t* particle, int target_rank, int
 	// TODO: optimize: add if stmt with 4 checks in case we're not inside a ghost zone
 	// TODO: optimize: array for cpu_of_cpu, ...
 	// TODO: think about rearranging if statement nesting
-	//
+	
 	if (bin_x == target_bin_x_min && bin_y == target_bin_y_min) {
 		// ul
 		if (target_rank_x > 0) send_particle(particle, cpu_of_cpu(target_rank_x - 1, target_rank_y));
 		if (target_rank_y > 0) send_particle(particle, cpu_of_cpu(target_rank_x, target_rank_y - 1));
 		if (target_rank_x > 0 && target_rank_y > 0) send_particle(particle, cpu_of_cpu(target_rank_x - 1, target_rank_y - 1));
-	} else if (bin_x == target_bin_x_max && bin_y == target_bin_y_min) {
+	} else if (bin_x == target_bin_x_max-1 && bin_y == target_bin_y_min) {
 		// ur
     if (target_rank_x < thread_x_dim - 1) send_particle(particle, cpu_of_cpu(target_rank_x + 1, target_rank_y));
     if (target_rank_y > 0) send_particle(particle, cpu_of_cpu(target_rank_x, target_rank_y - 1));
     if (target_rank_x < thread_x_dim - 1 && target_rank_y > 0) send_particle(particle, cpu_of_cpu(target_rank_x + 1, target_rank_y - 1));
-	} else if (bin_x == target_bin_x_max && bin_y == target_bin_y_max) {
+	} else if (bin_x == target_bin_x_max-1 && bin_y == target_bin_y_max-1) {
 		// dr
     if (target_rank_x < thread_x_dim - 1) send_particle(particle, cpu_of_cpu(target_rank_x + 1, target_rank_y));
     if (target_rank_y < thread_y_dim - 1) send_particle(particle, cpu_of_cpu(target_rank_x, target_rank_y + 1));
     if (target_rank_x < thread_x_dim - 1 && target_rank_y < thread_y_dim - 1) send_particle(particle, cpu_of_cpu(target_rank_x + 1, target_rank_y + 1));
-	} else if (bin_x == target_bin_x_min && bin_y == target_bin_y_max) {
+	} else if (bin_x == target_bin_x_min && bin_y == target_bin_y_max-1) {
 		// dl
     if (target_rank_x > 0) send_particle(particle, cpu_of_cpu(target_rank_x - 1, target_rank_y));
     if (target_rank_y < thread_y_dim - 1) send_particle(particle, cpu_of_cpu(target_rank_x, target_rank_y + 1));
@@ -334,10 +334,10 @@ void World::check_send_ghost_particle(particle_t* particle, int target_rank, int
 	} else if (bin_y == target_bin_y_min) {
 		// u
 		if (target_rank_y > 0) send_particle(particle, cpu_of_cpu(target_rank_x, target_rank_y - 1));
-	} else if (bin_x == target_bin_x_max) {
+	} else if (bin_x == target_bin_x_max-1) {
 		// r
 		if (target_rank_x < thread_x_dim - 1) send_particle(particle, cpu_of_cpu(target_rank_x + 1, target_rank_y));
-	} else if (bin_y == target_bin_y_max) {
+	} else if (bin_y == target_bin_y_max-1) {
 		// d
 		if (target_rank_y < thread_y_dim - 1) send_particle(particle, cpu_of_cpu(target_rank_x, target_rank_y + 1));
 	} else if (bin_x == target_bin_x_min) {
@@ -363,7 +363,7 @@ void World::send_ghost_particles() {
 	}
 
 	if (my_rank_y > 0 && my_rank_x < thread_x_dim - 1) {
-		bins[bin_of_bin(bin_x_min, bin_y_max - 1)].send_as_ghost(cpu_of_cpu(my_rank_x + 1, my_rank_y - 1));
+		bins[bin_of_bin(bin_x_max - 1, bin_y_min)].send_as_ghost(cpu_of_cpu(my_rank_x + 1, my_rank_y - 1));
 //		flush_send_buffer(cpu_of_cpu(my_rank_x + 1, my_rank_y - 1));
 	}
 
@@ -376,7 +376,7 @@ void World::send_ghost_particles() {
 	}
 
 	if (my_rank_x < thread_x_dim - 1) { 
-		for (int y = 0; y < bin_y_max; ++y) {
+		for (int y = bin_y_min; y < bin_y_max; ++y) {
 			bins[bin_of_bin(bin_x_max - 1, y)].send_as_ghost(cpu_of_cpu(my_rank_x + 1, my_rank_y));
 		}
 
@@ -402,8 +402,42 @@ void World::send_ghost_particles() {
 	}
 }
 
+void World::clear_ghost_particles() {
+	for (int i = 0; i < bin_count; ++i) {
+		if (bins[i].binParticles.size() > 500) {
+			printf("[%i] LIST %i GETS FULL: %i\n", my_rank, i, bins[i].binParticles.size());
+		}
+	}
+
+	// TODO: optimize
+	
+	for (int x = -1; x < bin_x_count + 1; ++x) {
+		int bin_index = bin_of_bin(x + bin_x_min, bin_y_min - 1);
+		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+
+		bin_index = bin_of_bin(x + bin_x_min, bin_y_max);
+		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+	}
+
+	for (int y = -1; y < bin_y_count + 1; ++y) {
+		int bin_index = bin_of_bin(bin_x_min - 1, y + bin_y_min);
+		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+
+		bin_index = bin_of_bin(bin_x_max, y + bin_y_min);
+		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+	}
+
+  for (int i = 0; i < bin_count; ++i) {
+    if (bins[i].binParticles.size() > 500) {
+      printf("[%i] CLEARED LIST %i GETS FULL: %i\n", my_rank, i, bins[i].binParticles.size());
+    }
+  }
+}
+
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
     for( int step = 0; step < nsteps; step++ ) {
+			printf("%i\n", step);
+
 //		printf("[%i] Enter loop\n", my_rank);
     //
     //  compute forces
@@ -418,13 +452,23 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	move_particles(dt);
 //	printf("After move_particles\n");
 
+	flush_send_buffers();
+	
 	send_ghost_particles();
 //	printf("After send_ghost_particles\n");
 	
-	flush_send_buffers();
+	//flush_send_buffers();
 //	printf("After flush_send_buffers\n");
 
 	receive_moving_particles();
+	MPI_Barrier(MPI_COMM_WORLD);
+	reset_buffers();
+
+//	send_ghost_particles();
+	flush_send_buffers();
+
+	clear_ghost_particles();
+	receive_moving_particles();	
 //	printf("After receive_moving_particles\n");
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -446,9 +490,36 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
     //
     //  if we asked, save to a file every savefreq timesteps
     //
-	if( fsave && (step%SAVEFREQ) == 0 )
+	if( fsave && (step%SAVEFREQ) == 0 ) {
 	    save( fsave, n, particles );
-    }
+	}
+  }
+
+	
+	if (my_rank == 0) {
+		// receive
+		for (int x = 0; x < _nx; ++x) {
+			for (int y = 0; y < _ny; ++y) {
+				if (x < bin_x_max && y < bin_y_max) continue;
+
+				bins[bin_of_bin(x, y)].binParticles.clear();
+			}
+		}
+
+		receive_moving_particles();
+	}
+	else {
+		for (int x = bin_x_min; x < bin_x_max; ++x) {
+			for (int y = bin_y_min; y <  bin_y_max; ++y) {
+				int bin_index = bin_of_bin(x, y);
+				bins[bin_index].send_as_ghost(0);
+			}
+		}
+
+		flush_send_buffers();
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 

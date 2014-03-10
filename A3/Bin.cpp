@@ -43,7 +43,7 @@ void Bin::AddInboundParticle(particle_t* p)
 	}
 	else {
 		world->send_particle(p, my_rank);
-		world->check_send_ghost_particle(p, my_rank, I, J);
+		//world->check_send_ghost_particle(p, my_rank, I, J);
 	}
 }
 
