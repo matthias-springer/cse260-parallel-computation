@@ -36,6 +36,7 @@ public:
 	void flush_send_buffer(int buffer);
 	void receive_particles(int cpus);
 	void check_send_ghost_particle(particle_t* particle, int target_rank, int bin_x, int bin_y);
+	void output_particle_stats();
 
 	void setup_thread();
 	
@@ -59,6 +60,7 @@ public:
 	int bin_x_count;
 	int bin_y_count;
 	int bin_count;
+	int global_bin_count;
 
 	int max_x_bins;
 	int max_y_bins;

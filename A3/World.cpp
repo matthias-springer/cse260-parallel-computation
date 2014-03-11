@@ -46,6 +46,7 @@ int World::global_bin_y_of_particle(particle_t* particle) {
 }
 
 int World::bin_of_bin(int x, int y) {
+	if (x < 0 || y < 0 || x >= _nx || y >= _ny) return -1;
 	return y*_nx + x;
 }
 
@@ -74,6 +75,8 @@ void World::setup_thread() {
 	bin_x_count = bin_x_max - bin_x_min;
 	bin_y_count = bin_y_max - bin_y_min;
 	bin_count = bin_y_count * bin_x_count;
+
+	global_bin_count = _nx * _ny;
 }
 
 #define BUFFER_SIZE 630
@@ -170,6 +173,8 @@ void World::reset_buffers() {
 	next_send_buffer = thread_count;
 }
 
+bool SHOW_RECEIVE = false;
+
 void World::receive_particles(int cpus) {
   int non_full_buffers = 0;
   send_buffer buffer;
@@ -189,6 +194,10 @@ void World::receive_particles(int cpus) {
       int newBin = index_j*_nx + index_i;
 
       bins[newBin].AddParticle(particles + buffer.particles[i].tag);
+
+			if (SHOW_RECEIVE) {
+				printf("got particle for bin %i, %i = %i\n", index_i, index_j, newBin);
+			}
     }
 
     if (buffer.size < BUFFER_SIZE) {
@@ -289,8 +298,6 @@ void World::send_particle(particle_t* particle, int target) {
 }
 
 void World::flush_send_buffer(int buffer) {
-//		printf("flush_send_buffer(%i)\n", buffer);
-
     MPI_Request request;
     send_buffer* target_buffer = send_buffers + send_buffer_index[buffer];
 
@@ -403,40 +410,72 @@ void World::send_ghost_particles() {
 }
 
 void World::clear_ghost_particles() {
+	/*
 	for (int i = 0; i < bin_count; ++i) {
 		if (bins[i].binParticles.size() > 500) {
 			printf("[%i] LIST %i GETS FULL: %i\n", my_rank, i, bins[i].binParticles.size());
 		}
 	}
+	*/
 
 	// TODO: optimize
+
+	int sum0=0;
 	
 	for (int x = -1; x < bin_x_count + 1; ++x) {
 		int bin_index = bin_of_bin(x + bin_x_min, bin_y_min - 1);
-		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+		if (bin_index >= 0 && bin_index < global_bin_count) {
+			bins[bin_index].binParticles.clear();
+//			printf("AAA %i %i\n", x + bin_x_min,  bin_y_min - 1);
+			sum0++;
+		}
 
 		bin_index = bin_of_bin(x + bin_x_min, bin_y_max);
-		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+		if (bin_index >= 0 && bin_index < global_bin_count) {
+			bins[bin_index].binParticles.clear();
+//			printf("BBB %i %i\n", x + bin_x_min,  bin_y_max);
+			sum0++;
+		}
+
 	}
 
 	for (int y = -1; y < bin_y_count + 1; ++y) {
 		int bin_index = bin_of_bin(bin_x_min - 1, y + bin_y_min);
-		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+		if (bin_index >= 0 && bin_index < global_bin_count) {
+//			printf("bin_of_bin(%i, %i) = %i\n", bin_x_min - 1, y+bin_y_min, bin_of_bin(bin_x_min - 1, y + bin_y_min));
+
+			bins[bin_index].binParticles.clear();
+			sum0++;
+		}
+
 
 		bin_index = bin_of_bin(bin_x_max, y + bin_y_min);
-		if (bin_index >= 0 && bin_index < bin_count) bins[bin_index].binParticles.clear();
+		if (bin_index >= 0 && bin_index < global_bin_count) {
+			bins[bin_index].binParticles.clear();
+//			printf("bin_of_bin(%i, %i) = %i\n", bin_x_max, y+bin_y_min, bin_of_bin(bin_x_max, y + bin_y_min));
+			sum0++;
+		}
 	}
 
-  for (int i = 0; i < bin_count; ++i) {
-    if (bins[i].binParticles.size() > 500) {
-      printf("[%i] CLEARED LIST %i GETS FULL: %i\n", my_rank, i, bins[i].binParticles.size());
-    }
-  }
+}
+
+void World::output_particle_stats() {
+	int sum = 0;
+
+	for (int x = bin_x_min; x < bin_x_max; ++x) {
+		for (int y = bin_y_min; y < bin_y_max; ++y) {
+			sum += bins[bin_of_bin(x,y)].binParticles.size();
+		}
+	}
+
+	printf("STAT [%i]:     %i particles\n", my_rank, sum);
 }
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
     for( int step = 0; step < nsteps; step++ ) {
 			printf("%i\n", step);
+
+			output_particle_stats();
 
 //		printf("[%i] Enter loop\n", my_rank);
     //
@@ -454,21 +493,22 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 
 	flush_send_buffers();
 	
-	send_ghost_particles();
+//	send_ghost_particles();
 //	printf("After send_ghost_particles\n");
 	
-	//flush_send_buffers();
+//	flush_send_buffers();
 //	printf("After flush_send_buffers\n");
 
 	receive_moving_particles();
 	MPI_Barrier(MPI_COMM_WORLD);
 	reset_buffers();
 
-//	send_ghost_particles();
+	send_ghost_particles();
 	flush_send_buffers();
 
 	clear_ghost_particles();
 	receive_moving_particles();	
+
 //	printf("After receive_moving_particles\n");
 
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -485,7 +525,7 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 // Might come in handy when debugging
 // prints out summary statistics every time step
 //
-	// VelNorms(particles,n,uMax,vMax,uL2,vL2);
+	 VelNorms(particles,n,uMax,vMax,uL2,vL2);
 	
     //
     //  if we asked, save to a file every savefreq timesteps
@@ -495,18 +535,42 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	}
   }
 
+	reset_buffers();
+
+	printf("[%i] bin_x_max=%i , bin_y_max=%i\n", my_rank, bin_x_max, bin_y_max);
 	
+	int sum2 = 0;
+
 	if (my_rank == 0) {
 		// receive
 		for (int x = 0; x < _nx; ++x) {
 			for (int y = 0; y < _ny; ++y) {
 				if (x < bin_x_max && y < bin_y_max) continue;
 
+				sum2 += bins[bin_of_bin(x, y)].binParticles.size();
+				//printf("bin_of_bin(%i, %i) = %i\n", x, y, bin_of_bin(x, y));
+
 				bins[bin_of_bin(x, y)].binParticles.clear();
 			}
 		}
 
+		printf("CLEARED OTHER CPU'S BINS: %i particles\n", sum2);
+
+		int sum_before = 0;
+    for (int i = 0; i < global_bin_count; ++i) {
+      sum_before += bins[i].binParticles.size();
+    }
+		printf("HAVE PARTICLES before receiving: %i\n", sum_before);
+		//SHOW_RECEIVE=true;
+
 		receive_moving_particles();
+
+		int sum = 0;
+		for (int i = 0; i < global_bin_count; ++i) {
+			sum += bins[i].binParticles.size();
+		}
+
+		printf("HAVE %i PARTICLES\n", sum);
 	}
 	else {
 		for (int x = bin_x_min; x < bin_x_max; ++x) {
