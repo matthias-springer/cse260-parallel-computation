@@ -13,54 +13,54 @@
 
 extern particle_t * particles;
 
-int World::cpu_x_of_particle(particle_t* particle) {
+inline int World::cpu_x_of_particle(particle_t* particle) {
 	return global_bin_x_of_particle(particle) / max_x_bins;
 }
 
-int World::cpu_y_of_particle(particle_t* particle) {
+inline int World::cpu_y_of_particle(particle_t* particle) {
 	return global_bin_y_of_particle(particle) / max_y_bins;
 }
 
-int World::local_bin_x_of_particle(particle_t* particle) {
+inline int World::local_bin_x_of_particle(particle_t* particle) {
 	return global_bin_x_of_particle(particle) % max_x_bins;
 }
 
-int World::local_bin_y_of_particle(particle_t* particle) {
+inline int World::local_bin_y_of_particle(particle_t* particle) {
 	return global_bin_y_of_particle(particle) % max_y_bins;
 }
 
-int World::cpu_of_particle(particle_t* particle) {
+inline int World::cpu_of_particle(particle_t* particle) {
 	return cpu_y_of_particle(particle) * thread_x_dim + cpu_x_of_particle(particle);
 }
 
-int World::local_bin_of_particle(particle_t* particle) {
+inline int World::local_bin_of_particle(particle_t* particle) {
 	return local_bin_y_of_particle(particle) * bin_x_count + local_bin_x_of_particle(particle);
 }
 
-int World::global_bin_x_of_particle(particle_t* particle) {
+inline int World::global_bin_x_of_particle(particle_t* particle) {
 	return (int) (particle->x / binWidth);
 }
 
-int World::global_bin_y_of_particle(particle_t* particle) {
+inline int World::global_bin_y_of_particle(particle_t* particle) {
 	return (int) (particle->y / binHeight);
 }
 
-int World::bin_of_bin(int x, int y) {
+inline int World::bin_of_bin(int x, int y) {
 	if (x < 0 || y < 0 || x >= _nx || y >= _ny) return -1;
 	return y*_nx + x;
 }
 
-int World::cpu_of_cpu(int x, int y) {
+inline int World::cpu_of_cpu(int x, int y) {
 	return y*thread_x_dim + x;
 }
 
-int World::cpu_of_bin(int x, int y) {
+inline int World::cpu_of_bin(int x, int y) {
 	int cpu_x = x / max_x_bins;
 	int cpu_y = y / max_y_bins;
 	return cpu_y * thread_x_dim + cpu_x;
 }
 
-void World::setup_thread() {
+inline void World::setup_thread() {
 	my_rank_y = my_rank / thread_x_dim;
 	my_rank_x = my_rank % thread_x_dim;
 
@@ -93,8 +93,6 @@ int num_buffers;
 
 World::World(double size, int nx, int ny, int np, int n, particle_t* particles, int rank, int num_threads, int threads_x, int threads_y) : _size(size), _nx(nx), _ny(ny), _np(np), _n(n), my_rank(rank), thread_count(num_threads), thread_x_dim(threads_x), thread_y_dim(threads_y)
 {
-	printf("initing world on process %i\n", my_rank);
-
 	binCount = nx * ny;
 	bins = new Bin[binCount];
 	binWidth = size / (double) nx;
@@ -173,8 +171,6 @@ void World::reset_buffers() {
 	next_send_buffer = thread_count;
 }
 
-bool SHOW_RECEIVE = false;
-
 void World::receive_particles(int cpus) {
   int non_full_buffers = 0;
   send_buffer buffer;
@@ -182,7 +178,6 @@ void World::receive_particles(int cpus) {
   while (non_full_buffers < cpus - 1) {
     MPI_Status status;
     MPI_Recv(&buffer, sizeof(send_buffer), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-//		printf("Received buffer\n");
 
     // put partices into memory and bins
     for (int i = 0; i < buffer.size; i++) {
@@ -194,10 +189,6 @@ void World::receive_particles(int cpus) {
       int newBin = index_j*_nx + index_i;
 
       bins[newBin].AddParticle(particles + buffer.particles[i].tag);
-
-			if (SHOW_RECEIVE) {
-				printf("got particle for bin %i, %i = %i\n", index_i, index_j, newBin);
-			}
     }
 
     if (buffer.size < BUFFER_SIZE) {
@@ -272,14 +263,11 @@ void World::move_particles(double dt)
 }
 
 void World::send_particle(particle_t* particle, int target) {
-//		printf("scheduling particle for send\n");
     send_buffer* target_buffer = send_buffers + send_buffer_index[target];
-//    printf("[%i] sending to target %i (buffer_index=%i), using send buffer with index %i / %i\n", my_rank, target, target_buffer->size, send_buffer_index[target], num_buffers);
     memcpy(target_buffer->particles + target_buffer->size++, particle, sizeof(particle_t));
 
     if (target_buffer->size == BUFFER_SIZE) {
       MPI_Request request;
-//			printf("sending buffer from %d to %d\n", my_rank, target);
 
       MPI_Isend(target_buffer, sizeof(send_buffer), MPI_BYTE, target, 0, MPI_COMM_WORLD, &request);
       send_buffer_index[target] = next_send_buffer++;
@@ -410,31 +398,17 @@ void World::send_ghost_particles() {
 }
 
 void World::clear_ghost_particles() {
-	/*
-	for (int i = 0; i < bin_count; ++i) {
-		if (bins[i].binParticles.size() > 500) {
-			printf("[%i] LIST %i GETS FULL: %i\n", my_rank, i, bins[i].binParticles.size());
-		}
-	}
-	*/
-
 	// TODO: optimize
 
-	int sum0=0;
-	
 	for (int x = -1; x < bin_x_count + 1; ++x) {
 		int bin_index = bin_of_bin(x + bin_x_min, bin_y_min - 1);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
 			bins[bin_index].binParticles.clear();
-//			printf("AAA %i %i\n", x + bin_x_min,  bin_y_min - 1);
-			sum0++;
 		}
 
 		bin_index = bin_of_bin(x + bin_x_min, bin_y_max);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
 			bins[bin_index].binParticles.clear();
-//			printf("BBB %i %i\n", x + bin_x_min,  bin_y_max);
-			sum0++;
 		}
 
 	}
@@ -442,18 +416,13 @@ void World::clear_ghost_particles() {
 	for (int y = -1; y < bin_y_count + 1; ++y) {
 		int bin_index = bin_of_bin(bin_x_min - 1, y + bin_y_min);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
-//			printf("bin_of_bin(%i, %i) = %i\n", bin_x_min - 1, y+bin_y_min, bin_of_bin(bin_x_min - 1, y + bin_y_min));
-
 			bins[bin_index].binParticles.clear();
-			sum0++;
 		}
 
 
 		bin_index = bin_of_bin(bin_x_max, y + bin_y_min);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
 			bins[bin_index].binParticles.clear();
-//			printf("bin_of_bin(%i, %i) = %i\n", bin_x_max, y+bin_y_min, bin_of_bin(bin_x_max, y + bin_y_min));
-			sum0++;
 		}
 	}
 
@@ -473,17 +442,15 @@ void World::output_particle_stats() {
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
     for( int step = 0; step < nsteps; step++ ) {
-			printf("%i\n", step);
+	//		printf("%i\n", step);
 
-			output_particle_stats();
+	//		output_particle_stats();
 
 //		printf("[%i] Enter loop\n", my_rank);
     //
     //  compute forces
     //
 	apply_forces();
-//     Debugging output
-//      list_particles(particles,n);
     
     //
     //  move particles
@@ -493,13 +460,8 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 
 	flush_send_buffers();
 	
-//	send_ghost_particles();
-//	printf("After send_ghost_particles\n");
-	
-//	flush_send_buffers();
-//	printf("After flush_send_buffers\n");
-
 	receive_moving_particles();
+	
 	MPI_Barrier(MPI_COMM_WORLD);
 	reset_buffers();
 
@@ -509,7 +471,6 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	clear_ghost_particles();
 	receive_moving_particles();	
 
-//	printf("After receive_moving_particles\n");
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	reset_buffers();
@@ -525,7 +486,7 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 // Might come in handy when debugging
 // prints out summary statistics every time step
 //
-	 VelNorms(particles,n,uMax,vMax,uL2,vL2);
+//	 VelNorms(particles,n,uMax,vMax,uL2,vL2);
 	
     //
     //  if we asked, save to a file every savefreq timesteps
@@ -537,40 +498,17 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 
 	reset_buffers();
 
-	printf("[%i] bin_x_max=%i , bin_y_max=%i\n", my_rank, bin_x_max, bin_y_max);
-	
-	int sum2 = 0;
 
 	if (my_rank == 0) {
 		// receive
 		for (int x = 0; x < _nx; ++x) {
 			for (int y = 0; y < _ny; ++y) {
 				if (x < bin_x_max && y < bin_y_max) continue;
-
-				sum2 += bins[bin_of_bin(x, y)].binParticles.size();
-				//printf("bin_of_bin(%i, %i) = %i\n", x, y, bin_of_bin(x, y));
-
 				bins[bin_of_bin(x, y)].binParticles.clear();
 			}
 		}
 
-		printf("CLEARED OTHER CPU'S BINS: %i particles\n", sum2);
-
-		int sum_before = 0;
-    for (int i = 0; i < global_bin_count; ++i) {
-      sum_before += bins[i].binParticles.size();
-    }
-		printf("HAVE PARTICLES before receiving: %i\n", sum_before);
-		//SHOW_RECEIVE=true;
-
 		receive_moving_particles();
-
-		int sum = 0;
-		for (int i = 0; i < global_bin_count; ++i) {
-			sum += bins[i].binParticles.size();
-		}
-
-		printf("HAVE %i PARTICLES\n", sum);
 	}
 	else {
 		for (int x = bin_x_min; x < bin_x_max; ++x) {
