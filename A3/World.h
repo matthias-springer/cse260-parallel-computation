@@ -35,7 +35,7 @@ public:
 	void flush_send_buffers();
 	void flush_send_buffer(int buffer);
 	void receive_particles(int cpus);
-	void check_send_ghost_particle(particle_t* particle, int target_rank, int bin_x, int bin_y);
+	void check_send_ghost_particle(particle_t* particle, int target_rank_x, int target_rank_y, int bin_x, int bin_y);
 	void output_particle_stats();
 
 	void setup_thread();
@@ -51,6 +51,10 @@ public:
 	int my_rank;
 	int my_rank_x;
 	int my_rank_y;
+	int *thread_bin_x_min;
+	int *thread_bin_y_min;
+	int *thread_bin_x_max;
+	int *thread_bin_y_max;
 
 	int thread_count;
 	int bin_x_min;

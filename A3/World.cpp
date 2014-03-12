@@ -46,7 +46,6 @@ inline int World::global_bin_y_of_particle(particle_t* particle) {
 }
 
 inline int World::bin_of_bin(int x, int y) {
-	if (x < 0 || y < 0 || x >= _nx || y >= _ny) return -1;
 	return y*_nx + x;
 }
 
@@ -77,6 +76,21 @@ inline void World::setup_thread() {
 	bin_count = bin_y_count * bin_x_count;
 
 	global_bin_count = _nx * _ny;
+
+	thread_bin_x_min = new int[thread_x_dim];
+	thread_bin_y_min = new int[thread_y_dim];
+	thread_bin_x_max = new int[thread_x_dim];
+	thread_bin_y_max = new int[thread_y_dim];
+
+	for (int x = 0; x < thread_x_dim; ++x) {
+		thread_bin_x_min[x] = x * max_x_bins;
+		thread_bin_x_max[x] = min((x + 1) * max_x_bins, _nx);
+	}
+
+	for (int y = 0; y < thread_y_dim; ++y) {
+	  thread_bin_y_min[y] = y * max_y_bins;
+		thread_bin_y_max[y] = min((y + 1) * max_y_bins, _ny);
+	}
 }
 
 #define BUFFER_SIZE 630
@@ -105,6 +119,8 @@ World::World(double size, int nx, int ny, int np, int n, particle_t* particles, 
                 bins[binID].I = i;
                 bins[binID].J = j;
 								bins[binID].my_rank = cpu_of_bin(i, j);
+								bins[binID].my_rank_x = i / max_x_bins;
+								bins[binID].my_rank_y = j / max_y_bins;
                 bins[binID].world = this;
             }
 	}
@@ -292,15 +308,11 @@ void World::flush_send_buffer(int buffer) {
     MPI_Isend(target_buffer, sizeof(int) + sizeof(particle_t) * target_buffer->size, MPI_BYTE, buffer, 0, MPI_COMM_WORLD, &request);
 }
 
-void World::check_send_ghost_particle(particle_t* particle, int target_rank, int bin_x, int bin_y) {
-	// TODO: store in array
-  int target_rank_x = target_rank % thread_x_dim;
-  int target_rank_y = target_rank / thread_x_dim;
-
-	int target_bin_x_min = target_rank_x * max_x_bins;
-  int target_bin_x_max = min((target_rank_x + 1) * max_x_bins, _nx);
-  int target_bin_y_min = target_rank_y * max_y_bins;
-  int target_bin_y_max = min((target_rank_y + 1) * max_y_bins, _ny);
+void World::check_send_ghost_particle(particle_t* particle, int target_rank_x, int target_rank_y, int bin_x, int bin_y) {
+	int target_bin_x_min = thread_bin_x_min[target_rank_x];
+	int target_bin_x_max = thread_bin_x_max[target_rank_x];
+	int target_bin_y_min = thread_bin_y_min[target_rank_y];
+	int target_bin_y_max = thread_bin_y_max[target_rank_y];
 
 	// TODO: optimize: add if stmt with 4 checks in case we're not inside a ghost zone
 	// TODO: optimize: array for cpu_of_cpu, ...

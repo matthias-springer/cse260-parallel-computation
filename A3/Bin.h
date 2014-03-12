@@ -33,6 +33,8 @@ public:
 				 // all incoming migrating particles
   int I, J;  	// Index for this bin
 	int my_rank;
+	int my_rank_x;
+	int my_rank_y;
 
   World* world; // the world object used to access other bins
     
