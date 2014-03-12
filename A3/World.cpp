@@ -117,10 +117,12 @@ inline void World::setup_thread() {
 	ghost_bin_table = new fixed_int_8[global_bin_count];
 	for (int x = 0; x < _nx; ++x) {
 		for (int y = 0; y < _ny; ++y) {
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < 4; i++) {
 				ghost_bin_table[bin_of_bin(x, y)][i] = -1;
 			}
-			ghost_bin_table[bin_of_bin(x, y)][3] = 0;
+			ghost_bin_table[bin_of_bin(x, y)][4] = 1;
+
+			ghost_bin_table[bin_of_bin(x, y)][0] = (y / max_y_bins) * thread_x_dim + (x / max_x_bins);
 		}
 	}
 
@@ -130,14 +132,14 @@ inline void World::setup_thread() {
 				int bin_index = bin_of_bin(x, thread_bin_y_min[cpu_y]);
 				if (cpu_y > 0) {
 					// send to upper cpu
-					ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x, cpu_y - 1);
+					ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x, cpu_y - 1);
 					//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR A\n");
 				}
 
 				bin_index = bin_of_bin(x, thread_bin_y_max[cpu_y] - 1);
 				if (cpu_y < thread_y_dim - 1) {
 					// send to lower cpu
-					ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x, cpu_y + 1);
+					ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x, cpu_y + 1);
 					//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR B\n");
 				}
 			}
@@ -146,14 +148,14 @@ inline void World::setup_thread() {
 				int bin_index = bin_of_bin(thread_bin_x_min[cpu_x], y);
 				if (cpu_x > 0) {
 					// send to left cpu
-					ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x - 1, cpu_y);
+					ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x - 1, cpu_y);
 					//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR C\n");
 				}
 
 				bin_index = bin_of_bin(thread_bin_x_max[cpu_x] - 1, y);
 				if (cpu_x < thread_x_dim - 1) {
 					// send to right cpu
-					ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x + 1, cpu_y);
+					ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x + 1, cpu_y);
 					//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR D\n");
 				}
 			}
@@ -162,28 +164,28 @@ inline void World::setup_thread() {
 			if (cpu_x > 0 && cpu_y > 0) {
 				// send to left upper corner
 				int bin_index = bin_of_bin(thread_bin_x_min[cpu_x], thread_bin_y_min[cpu_y]);
-				ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x - 1, cpu_y - 1);
+				ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x - 1, cpu_y - 1);
 				//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR E\n");
 			}
 
 			if (cpu_x < thread_x_dim - 1 && cpu_y > 0) {
 				// send to right upper corner
 				int bin_index = bin_of_bin(thread_bin_x_max[cpu_x] - 1, thread_bin_y_min[cpu_y]);
-				ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x + 1, cpu_y - 1);
+				ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x + 1, cpu_y - 1);
 				//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR F for cpu_x=%i, cpu_y=%i\n", cpu_x, cpu_y);
 			}
 
 			if (cpu_x < thread_x_dim - 1 && cpu_y < thread_y_dim - 1) {
 				// send to lower right corner
 				int bin_index = bin_of_bin(thread_bin_x_max[cpu_x] - 1, thread_bin_y_max[cpu_y] - 1);
-				ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x + 1, cpu_y + 1);
+				ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x + 1, cpu_y + 1);
 				//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR G\n");
 			}
 
 			if (cpu_x > 0 && cpu_y < thread_y_dim - 1) {
 				// send to lower left corner
 				int bin_index = bin_of_bin(thread_bin_x_min[cpu_x], thread_bin_y_max[cpu_y] - 1);
-				ghost_bin_table[bin_index][ghost_bin_table[bin_index][3]++] = cpu_of_cpu(cpu_x - 1, cpu_y + 1);
+				ghost_bin_table[bin_index][ghost_bin_table[bin_index][4]++] = cpu_of_cpu(cpu_x - 1, cpu_y + 1);
 				//if (ghost_bin_table[bin_index][ghost_bin_table[bin_index][3] - 1] > 7) printf("ERR H\n");
 			}
 		}
@@ -387,8 +389,6 @@ void World::move_particles(double dt)
 		}
 	}
 
-	// TODO: sync ghost bins
-	
 #ifdef DEBUG
 //
 // May come in handy during debugging
@@ -445,8 +445,8 @@ inline void World::flush_send_buffer(int buffer) {
     MPI_Isend(target_buffer, sizeof(int) + sizeof(particle_t) * target_buffer->size, MPI_BYTE, buffer, 0, MPI_COMM_WORLD, &request);
 }
 
-void World::check_send_ghost_particle(particle_t* particle, int target_rank_x, int target_rank_y, int bin_x, int bin_y) {
-	for (int i = 0; i < 3; ++i) {
+void World::check_send_ghost_particle(particle_t* particle, int bin_x, int bin_y) {
+	for (int i = 0; i < 4; ++i) {
 		int target_rank = ghost_bin_table[bin_of_bin(bin_x, bin_y)][i];
 		
 		if (target_rank != -1) {

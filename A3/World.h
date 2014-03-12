@@ -38,7 +38,7 @@ public:
 	void flush_send_buffer(int buffer);
 	void flush_neighboring_send_buffers();
 	void receive_particles(int cpus);
-	void check_send_ghost_particle(particle_t* particle, int target_rank_x, int target_rank_y, int bin_x, int bin_y);
+	void check_send_ghost_particle(particle_t* particle, int bin_x, int bin_y);
 	void output_particle_stats();
 	void receive_moving_particles_from_neighbors();
 	void setup_thread();
