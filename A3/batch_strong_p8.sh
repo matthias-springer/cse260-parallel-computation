@@ -62,7 +62,7 @@ date
 
 mpirun -np 1 ./nbody-bang -t 75 -n 50000 -M 40 -s 1382741450 -px 1 -py 1
 mpirun -np 2 ./nbody-bang -t 75 -n 50000 -M 40 -s 1382741450 -px 1 -py 2
-mpirun -np 2 ./nbody-bang -t 75 -n 50000 -M 40 -s 1382741450 -px 2 -py 2
+mpirun -np 4 ./nbody-bang -t 75 -n 50000 -M 40 -s 1382741450 -px 2 -py 2
 mpirun -np 4 ./nbody-bang -t 75 -n 50000 -M 40 -s 1382741450 -px 1 -py 4
 mpirun -np 4 ./nbody-bang -t 75 -n 50000 -M 40 -s 1382741450 -px 2 -py 2
 mpirun -np 4 ./nbody-bang -t 75 -n 50000 -M 40 -s 1382741450 -px 4 -py 1

@@ -1,0 +1,538 @@
+
+ *** Current working directory
+/home/mspringe/repo/cse260/A3
+
+ *** Compiler
+Using built-in specs.
+Target: x86_64-redhat-linux
+Configured with: ../configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-bootstrap --enable-shared --enable-threads=posix --enable-checking=release --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-languages=c,c++,objc,obj-c++,java,fortran,ada --enable-java-awt=gtk --disable-dssi --with-java-home=/usr/lib/jvm/java-1.5.0-gcj-1.5.0.0/jre --enable-libgcj-multifile --enable-java-maintainer-mode --with-ecj-jar=/usr/share/java/eclipse-ecj.jar --disable-libjava-multilib --with-ppl --with-cloog --with-tune=generic --with-arch_32=i686 --build=x86_64-redhat-linux
+Thread model: posix
+gcc version 4.4.6 20120305 (Red Hat 4.4.6-4) (GCC) 
+
+ *** Environment
+MANPATH=/opt/openmpi/share/man:/usr/share/man:/opt/gridengine/man:/opt/openmpi/share/man:/usr/share/man/en:/usr/share/man:/opt/gridengine/man:/share/apps/opt/gcc-4.7.3/share/man:/usr/local/share/man:/opt/rocks/man:/usr/java/latest/man:/opt/ganglia/man:/opt/sun-ct/man
+PDSHROOT=/opt/pdsh
+HOSTNAME=compute-0-22.local
+SGE_TASK_STEPSIZE=undefined
+SHELL=/bin/bash
+TERM=xterm
+NHOSTS=1
+HISTSIZE=1000
+ECLIPSE_HOME=/opt/eclipse
+SGE_O_WORKDIR=/home/mspringe/repo/cse260/A3
+TMPDIR=/tmp/11794.1.mpi.q
+SSH_CLIENT=128.54.51.95 50965 22
+SGE_O_HOME=/home/mspringe
+SGE_ARCH=linux-x64
+SGE_CELL=default
+MPICH_PROCESS_GROUP=no
+OLDPWD=/home/mspringe/repo/cse260/A3
+QTDIR=/usr/lib64/qt-3.3
+QTINC=/usr/lib64/qt-3.3/include
+RESTARTED=0
+SSH_TTY=/dev/pts/38
+ANT_HOME=/opt/rocks
+ARC=linux-x64
+USER=mspringe
+LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.tbz=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.axa=01;36:*.oga=01;36:*.spx=01;36:*.xspf=01;36:
+LD_LIBRARY_PATH=/opt/gridengine/lib/linux-x64:/share/apps/opt/gcc-4.7.3/lib:/share/apps/opt/gcc-4.7.3/lib64:/opt/openmpi/lib:/opt/gridengine/lib/linux-x64
+SGE_TASK_LAST=undefined
+QUEUE=mpi.q
+ROCKS_ROOT=/opt/rocks
+SGE_TASK_ID=undefined
+SGE_BINARY_PATH=/opt/gridengine/bin/linux-x64
+MAIL=/var/spool/mail/mspringe
+PATH=/usr/bin/:/tmp/11794.1.mpi.q:/share/apps/opt/gcc-4.7.3/bin:/usr/bin/:/opt/openmpi/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/eclipse:/opt/ganglia/bin:/opt/ganglia/sbin:/usr/java/latest/bin:/opt/pdsh/bin:/opt/rocks/bin:/opt/rocks/sbin:/opt/gridengine/bin/linux-x64:/share/apps/bin:/share/apps/sbin:/home/mspringe/bin:/home/mspringe/bin
+runlevel=5
+RUNLEVEL=5
+SGE_STDERR_PATH=/home/mspringe/repo/cse260/A3/apf-strong-scale.o11794
+LANGSH_SOURCED=1
+PWD=/home/mspringe/repo/cse260/A3
+JAVA_HOME=/usr/java/latest
+_LMFILES_=/usr/share/Modules/modulefiles/rocks-openmpi_openib:/etc/modulefiles/gcc-4.7.3
+SGE_STDOUT_PATH=/home/mspringe/repo/cse260/A3/apf-strong-scale.o11794
+SGE_ACCOUNT=sge
+SGE_RSH_COMMAND=/usr/bin/ssh
+SGE_EXECD_PORT=537
+LANG=en_US.UTF-8
+JOB_SCRIPT=/opt/gridengine/default/spool/compute-0-22/job_scripts/11794
+JOB_NAME=apf-strong-scale
+MODULEPATH=/usr/share/Modules/modulefiles:/etc/modulefiles
+SGE_QMASTER_PORT=536
+LOADEDMODULES=rocks-openmpi_openib:gcc-4.7.3
+SGE_ROOT=/opt/gridengine
+ROCKS_USER_MODULE_DEF=true
+previous=N
+PREVLEVEL=N
+REQNAME=apf-strong-scale
+SGE_JOB_SPOOL_DIR=/opt/gridengine/default/spool/compute-0-22/active_jobs/11794.1
+ENVIRONMENT=BATCH
+HISTCONTROL=ignoredups
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+CONSOLETYPE=vt
+PE_HOSTFILE=/opt/gridengine/default/spool/compute-0-22/active_jobs/11794.1/pe_hostfile
+HOME=/home/mspringe
+SHLVL=2
+SGE_CWD_PATH=/home/mspringe/repo/cse260/A3
+NQUEUES=1
+SGE_O_LOGNAME=mspringe
+SGE_O_MAIL=/var/spool/mail/mspringe
+MPIHOME=/opt/openmpi
+UPSTART_INSTANCE=
+TMP=/tmp/11794.1.mpi.q
+JOB_ID=11794
+LOGNAME=mspringe
+UPSTART_EVENTS=runlevel
+CVS_RSH=ssh
+QTLIB=/usr/lib64/qt-3.3/lib
+PE=orte
+LC_CTYPE=en_US.UTF-8
+SSH_CONNECTION=128.54.51.95 50965 132.239.145.212 22
+SGE_TASK_FIRST=undefined
+MODULESHOME=/usr/share/Modules
+LESSOPEN=|/usr/bin/lesspipe.sh %s
+SGE_O_PATH=/share/apps/opt/gcc-4.7.3/bin:/usr/bin/:/opt/openmpi/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/eclipse:/opt/ganglia/bin:/opt/ganglia/sbin:/usr/java/latest/bin:/opt/pdsh/bin:/opt/rocks/bin:/opt/rocks/sbin:/opt/gridengine/bin/linux-x64:/share/apps/bin:/share/apps/sbin:/home/mspringe/bin
+UPSTART_JOB=rc
+SGE_O_HOST=ccom-bang-login
+SGE_O_SHELL=/bin/bash
+REQUEST=apf-strong-scale
+NSLOTS=8
+PUB=/share/class/public/cse260-wi14
+SGE_STDIN_PATH=/dev/null
+G_BROKEN_FILENAMES=1
+SCRATCH=/scratch/mspringe
+OMPI_MCA_btl=openib,self,sm
+module=() {  eval `/usr/bin/modulecmd bash $*`
+}
+_=/usr/bin/printenv
+
+>>> Job Starts
+Tue Mar 11 16:46:34 PDT 2014
+PID 30203 ready for attach
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 1 x 1
+Creating world on rank 0
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 4.33128405e+00 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 4.33128405e+00	1	1 x 1	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+PID 30207 ready for attach
+PID 30208 ready for attach
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 1 x 2
+Creating world on rank 0
+Creating world on rank 1
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.72805041e-01, 5.75610049e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 2.19842505e+00 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 2.19842505e+00	1	1 x 2	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+PID 30215 ready for attach
+PID 30216 ready for attach
+PID 30217 ready for attach
+PID 30218 ready for attach
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Creating world on rank 2
+Creating world on rank 3
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 2 x 2
+Creating world on rank 0
+Creating world on rank 1
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96778284e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.75906297e-01, 5.75225868e-01 )
+(u,v) Max = ( 1.81466948e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.75433789e-01, 5.75421412e-01 )
+(u,v) Max = ( 1.96184698e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.74211993e-01, 5.76918233e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 1.10986400e+00 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 1.10986400e+00	1	2 x 2	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+PID 30228 ready for attach
+PID 30229 ready for attach
+PID 30230 ready for attach
+PID 30231 ready for attach
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Creating world on rank 3
+Creating world on rank 2
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 1 x 4
+Creating world on rank 0
+Creating world on rank 1
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96184698e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.73964430e-01, 5.76896229e-01 )
+(u,v) Max = ( 1.81466948e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.75109137e-01, 5.75403502e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.75485468e-01, 5.75736811e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 1.15549302e+00 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 1.15549302e+00	1	1 x 4	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+PID 30241 ready for attach
+PID 30243 ready for attach
+PID 30242 ready for attach
+PID 30244 ready for attach
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Creating world on rank 2
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 2 x 2
+Creating world on rank 0
+Creating world on rank 3
+Creating world on rank 1
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96778284e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.75906297e-01, 5.75225868e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 1.11191702e+00 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 1.11191702e+00	1	2 x 2	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+(u,v) Max = ( 1.81466948e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.75433789e-01, 5.75421412e-01 )
+(u,v) Max = ( 1.96184698e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.74211993e-01, 5.76918233e-01 )
+PID 30254 ready for attach
+PID 30256 ready for attach
+PID 30255 ready for attach
+PID 30257 ready for attach
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Creating world on rank 1
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 4 x 1
+Creating world on rank 0
+Creating world on rank 2
+Creating world on rank 3
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 1.14792299e+00 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 1.14792299e+00	1	4 x 1	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+(u,v) Max = ( 1.88091139e+00, 1.76337992e+00 )
+(u,v) L2 = ( 5.75932552e-01, 5.75065459e-01 )
+(u,v) Max = ( 1.96184698e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.75433653e-01, 5.75438328e-01 )
+(u,v) Max = ( 1.96778284e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.75561722e-01, 5.75324157e-01 )
+PID 30267 ready for attach
+PID 30268 ready for attach
+PID 30269 ready for attach
+PID 30270 ready for attach
+PID 30271 ready for attach
+PID 30272 ready for attach
+PID 30273 ready for attach
+PID 30274 ready for attach
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Creating world on rank 1
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Creating world on rank 2
+Creating world on rank 6
+Creating world on rank 3
+Creating world on rank 7
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 1 x 8
+Creating world on rank 0
+Creating world on rank 5
+Creating world on rank 4
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.87416414e+00, 1.94154152e+00 )
+(u,v) L2 = ( 5.75904034e-01, 5.76187853e-01 )
+(u,v) Max = ( 1.96184698e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.76080354e-01, 5.76342899e-01 )
+(u,v) Max = ( 1.81466948e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.75807689e-01, 5.76325249e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 7.24183083e-01 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 7.24183083e-01	1	1 x 8	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+(u,v) Max = ( 1.88091139e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.74988400e-01, 5.77094723e-01 )
+(u,v) Max = ( 1.80247520e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.76456754e-01, 5.75664667e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.76226359e-01, 5.76100702e-01 )
+(u,v) Max = ( 1.96778284e+00, 1.88592991e+00 )
+(u,v) L2 = ( 5.76650846e-01, 5.75813399e-01 )
+PID 30292 ready for attach
+PID 30293 ready for attach
+PID 30294 ready for attach
+PID 30295 ready for attach
+PID 30296 ready for attach
+PID 30297 ready for attach
+PID 30298 ready for attach
+PID 30299 ready for attach
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Creating world on rank 1
+Creating world on rank 3
+Creating world on rank 2
+Creating world on rank 5
+Creating world on rank 6
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 2 x 4
+Creating world on rank 0
+Creating world on rank 7
+Creating world on rank 4
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 6.47459984e-01 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 6.47459984e-01	1	2 x 4	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+(u,v) Max = ( 1.96778284e+00, 1.88592991e+00 )
+(u,v) L2 = ( 5.76997669e-01, 5.75736549e-01 )
+(u,v) Max = ( 1.78698264e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.76526537e-01, 5.75646078e-01 )
+(u,v) Max = ( 1.88091139e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.76314138e-01, 5.75915882e-01 )
+(u,v) Max = ( 1.82402129e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.75896064e-01, 5.76535027e-01 )
+(u,v) Max = ( 1.96184698e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.75241441e-01, 5.77266481e-01 )
+(u,v) Max = ( 1.81466948e+00, 1.76318788e+00 )
+(u,v) L2 = ( 5.76300647e-01, 5.76211596e-01 )
+(u,v) Max = ( 1.81466948e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.76332376e-01, 5.75894994e-01 )
+PID 30325 ready for attach
+PID 30326 ready for attach
+PID 30327 ready for attach
+PID 30328 ready for attach
+PID 30329 ready for attach
+PID 30330 ready for attach
+PID 30331 ready for attach
+PID 30332 ready for attach
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Creating world on rank 3
+Creating world on rank 5
+Creating world on rank 1
+Creating world on rank 2
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 4 x 2
+Creating world on rank 0
+Creating world on rank 6
+Creating world on rank 4
+Creating world on rank 7
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.81466948e+00, 1.76337992e+00 )
+(u,v) L2 = ( 5.75983950e-01, 5.76452497e-01 )
+(u,v) Max = ( 1.88091139e+00, 1.75088345e+00 )
+(u,v) L2 = ( 5.77478360e-01, 5.74971932e-01 )
+(u,v) Max = ( 1.96778284e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.76121790e-01, 5.76307516e-01 )
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 6.42564058e-01 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 6.42564058e-01	1	4 x 2	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+(u,v) Max = ( 1.86151656e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.75940041e-01, 5.76679037e-01 )
+(u,v) Max = ( 1.96184698e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.75799239e-01, 5.76422285e-01 )
+(u,v) Max = ( 1.86131435e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.77175222e-01, 5.75299873e-01 )
+(u,v) Max = ( 1.78698264e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.76885845e-01, 5.75558560e-01 )
+PID 30350 ready for attach
+PID 30351 ready for attach
+PID 30352 ready for attach
+PID 30353 ready for attach
+PID 30354 ready for attach
+PID 30355 ready for attach
+PID 30356 ready for attach
+PID 30357 ready for attach
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+Random seed is 1382741450
+Simulation world size: 5
+
+dt: 0.0005
+Random seed is 1382741450
+Creating world on rank 5
+Creating world on rank 6
+Creating world on rank 1
+Creating world on rank 7
+Creating world on rank 2
+Creating world on rank 3
+# particles : 50000
+Nsteps: 75
+Partition: 40 x 40
+Nt= 1
+Processor geometry: 8 x 1
+Creating world on rank 0
+Creating world on rank 4
+
+n = 50000, nsteps = 75
+(u,v) Max = ( 1.96778284e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.69309922e-01, 5.73427666e-01 )
+Running time = 6.89168930e-01 sec.
+ Tp (sec)		nt	px x py	N	nsteps nx       uMax, vMax, uL2, vL2
+@ 6.89168930e-01	1	8 x 1	50000	75	40	1.96778284e+00, 2.14820677e+00, 5.69309922e-01, 5.73427666e-01
+(u,v) Max = ( 1.96778284e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.76346437e-01, 5.76140437e-01 )
+(u,v) Max = ( 1.86151656e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.76715884e-01, 5.75481097e-01 )
+(u,v) Max = ( 1.88091139e+00, 1.76337992e+00 )
+(u,v) L2 = ( 5.76497438e-01, 5.75744901e-01 )
+(u,v) Max = ( 1.84188139e+00, 1.76318788e+00 )
+(u,v) L2 = ( 5.76782385e-01, 5.75471332e-01 )
+(u,v) Max = ( 1.96184698e+00, 2.14820677e+00 )
+(u,v) L2 = ( 5.76523794e-01, 5.75492810e-01 )
+(u,v) Max = ( 1.81522842e+00, 1.95612907e+00 )
+(u,v) L2 = ( 5.76166682e-01, 5.76150882e-01 )
+(u,v) Max = ( 1.96778284e+00, 1.97783296e+00 )
+(u,v) L2 = ( 5.77217317e-01, 5.74963462e-01 )
+Tue Mar 11 16:46:58 PDT 2014
+>>> Job Ends

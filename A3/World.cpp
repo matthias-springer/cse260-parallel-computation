@@ -51,6 +51,7 @@ inline int World::bin_of_bin(int x, int y) {
 }
 
 inline int World::cpu_of_cpu(int x, int y) {
+//	if (x > 0 || y > 0 || x < thread_x_dim || y < thread_y_dim)
 	return y*thread_x_dim + x;
 }
 
@@ -458,22 +459,24 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	move_particles(dt);
 //	printf("After move_particles\n");
 
-	flush_send_buffers();
-	
-	receive_moving_particles();
-	
-	MPI_Barrier(MPI_COMM_WORLD);
-	reset_buffers();
-
 	send_ghost_particles();
 	flush_send_buffers();
-
 	clear_ghost_particles();
-	receive_moving_particles();	
 
+	receive_moving_particles();
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	reset_buffers();
+
+//	send_ghost_particles();
+//	flush_send_buffers();
+
+//	clear_ghost_particles();
+//	receive_moving_particles();	
+
+
+//	MPI_Barrier(MPI_COMM_WORLD);
+//	reset_buffers();
 
 	if (nplot && ((step % nplot ) == 0)){
 
