@@ -56,7 +56,7 @@ int main( int argc, char **argv )
                 // may differ
     int px, py; // processor geometry
 
-printf("PID %d ready for attach\n", getpid());
+///printf("PID %d ready for attach\n", getpid());
 
 #ifdef _MPI_
  MPI_Init(&argc,&argv);
@@ -72,8 +72,8 @@ printf("PID %d ready for attach\n", getpid());
 #endif
 
     // If there was a parsing error, exit
-    if (!OK)
-        ABEND();
+//    if (!OK)
+//        ABEND();
 
     set_size( n );
 
@@ -124,7 +124,7 @@ printf("PID %d ready for attach\n", getpid());
     //
     // Bin the particles into nx by ny regions
     //
-		printf("Creating world on rank %i\n", myrank);
+		//printf("Creating world on rank %i\n", myrank);
     World world(size, nx, ny, nt, n, particles, myrank, nprocs, px, py);
   
     //
@@ -139,8 +139,9 @@ printf("PID %d ready for attach\n", getpid());
         cout <<  "n = " << n << ", nsteps = " << nsteps << endl;
     }
     VelNorms(particles,n,uMax,vMax,uL2,vL2);
-
-    RepNorms(uMax,vMax,uL2,vL2);
+		
+		if (!myrank)
+	    RepNorms(uMax,vMax,uL2,vL2);
     if ( !myrank) {
         cout <<  "Running time = " << simulation_time << " sec.\n";
     }

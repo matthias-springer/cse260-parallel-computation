@@ -61,6 +61,7 @@ inline int World::cpu_of_bin(int x, int y) {
 }
 
 inline void World::setup_thread() {
+	
 	my_rank_y = my_rank / thread_x_dim;
 	my_rank_x = my_rank % thread_x_dim;
 
