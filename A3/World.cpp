@@ -47,6 +47,7 @@ inline int World::global_bin_y_of_particle(particle_t* particle) {
 }
 
 inline int World::bin_of_bin(int x, int y) {
+	if (x < 0 || y < 0 || x >= _nx || y >= _ny) return -1;
 	return y*_nx + x;
 }
 
