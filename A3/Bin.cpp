@@ -14,7 +14,7 @@ extern double mass;
 extern double size;
 extern double min_r;
 
-#define BUFFER_SIZE 630
+//#define BUFFER_SIZE 630
 
 typedef struct send_buffer {
   int size;

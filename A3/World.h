@@ -6,6 +6,8 @@
 
 class Bin;
 
+typedef int fixed_int_8[9];
+
 class World
 {
 public:
@@ -34,10 +36,11 @@ public:
 	void send_particle(particle_t* particle, int target);
 	void flush_send_buffers();
 	void flush_send_buffer(int buffer);
+	void flush_neighboring_send_buffers();
 	void receive_particles(int cpus);
 	void check_send_ghost_particle(particle_t* particle, int target_rank_x, int target_rank_y, int bin_x, int bin_y);
 	void output_particle_stats();
-
+	void receive_moving_particles_from_neighbors();
 	void setup_thread();
 	
 	Bin* bins; // bins inside the world
@@ -47,7 +50,7 @@ public:
 	double binWidth, binHeight; //dimensions of each bin
 
 	// thread-local variables
-	
+	int count_neighbors;
 	int my_rank;
 	int my_rank_x;
 	int my_rank_y;
@@ -71,6 +74,8 @@ public:
 
 	int thread_x_dim;
 	int thread_y_dim;
+
+	fixed_int_8 *ghost_bin_table;
 };
 
 #endif

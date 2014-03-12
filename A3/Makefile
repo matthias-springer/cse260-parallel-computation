@@ -17,7 +17,7 @@ ifeq ($(gprof), 1)
         LDFLAGS += -g -pg
 endif
 
-WARNINGS += -Wall -pedantic
+WARNINGS += -Wall -pedantic -DBUFFER_SIZE=$(BSIZE)
 
 C++FLAGS 	+= $(WARNINGS)
 
