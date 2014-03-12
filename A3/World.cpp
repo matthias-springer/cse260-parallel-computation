@@ -11,8 +11,6 @@
 #include "mpi.h"
 #include <math.h>
 
-vector<particle_t*> temp_particles;
-
 extern particle_t * particles;
 
 inline int World::cpu_x_of_particle(particle_t* particle) {
@@ -174,18 +172,6 @@ void World::reset_buffers() {
 }
 
 void World::receive_particles(int cpus) {
-	for (int i = 0; i < temp_particles.size(); ++i) {
-			particle_t* particle = temp_particles[i];
-      int index_i = (int) (particle->x / binWidth);
-      int index_j  = (int) (particle->y / binHeight);
-      int newBin = index_j*_nx + index_i;
-
-      bins[newBin].AddParticle(particle);
-	}
-
-	temp_particles.clear();
-
-
   int non_full_buffers = 0;
   send_buffer buffer;
 
@@ -280,7 +266,11 @@ void World::move_particles(double dt)
 void World::send_particle(particle_t* particle, int target) {
 		if (target == my_rank) {
 			// send to ourselves
-			temp_particles.push_back(particle);
+      int index_i = (int) (particle->x / binWidth);
+      int index_j  = (int) (particle->y / binHeight);
+      int newBin = index_j*_nx + index_i;
+
+      bins[newBin].AddParticle(particle);
 			return;
 		}
 
@@ -292,18 +282,7 @@ void World::send_particle(particle_t* particle, int target) {
 
       MPI_Isend(target_buffer, sizeof(send_buffer), MPI_BYTE, target, 0, MPI_COMM_WORLD, &request);
       send_buffer_index[target] = next_send_buffer++;
-
-      if (next_send_buffer > num_buffers + 1) {
-        printf("die die die 1\n");
-        exit(1);
-      }
     }
-    else if (target_buffer->size > BUFFER_SIZE) {
-      // TODO: remove
-      printf("die die die 2\n");
-      exit(1);
-    }
-  
 }
 
 void World::flush_send_buffer(int buffer) {
@@ -476,12 +455,12 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
     //
     //  move particles
     //
+  clear_ghost_particles();
 	move_particles(dt);
 //	printf("After move_particles\n");
 
 	send_ghost_particles();
 	flush_send_buffers();
-	clear_ghost_particles();
 
 	receive_moving_particles();
 
