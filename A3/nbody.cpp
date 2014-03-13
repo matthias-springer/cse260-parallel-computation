@@ -83,6 +83,11 @@ int main( int argc, char **argv )
         ABEND();
     }
 
+		if (px*3 > nx || py*3 > ny) {
+			cout << "Invalid configuration: ensure that px*3 <= M and py*2 <= M." << endl;
+			ABEND();
+		}
+
     int nprocs=1, myrank=0;
 #ifdef _MPI_
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
