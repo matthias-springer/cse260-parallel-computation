@@ -83,6 +83,16 @@ int main( int argc, char **argv )
         ABEND();
     }
 
+		if ((int)((px-1) * ceil((1.0*nx)/px)) == nx) {
+			nx++;
+			ny++;
+		}
+
+    if ((int)((py-1) * ceil((1.0*ny)/py)) == ny) {
+			nx++;
+      ny++;
+    }
+
 		if (px*3 > nx || py*3 > ny) {
 			cout << "Invalid configuration: ensure that px*3 <= M and py*2 <= M." << endl;
 			ABEND();
