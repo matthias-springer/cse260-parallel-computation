@@ -14,20 +14,26 @@
 
 extern particle_t * particles;
 int nnplot;
+int* target_cpu_table;
 
 inline int World::cpu_x_of_particle(particle_t* particle) {
-	return global_bin_x_of_particle(particle) / max_x_bins;
+	// TODO: check table
+	return min(global_bin_x_of_particle(particle) / max_x_bins, thread_x_dim - 1);
 }
 
 inline int World::cpu_y_of_particle(particle_t* particle) {
-	return global_bin_y_of_particle(particle) / max_y_bins;
+	return min(global_bin_y_of_particle(particle) / max_y_bins, thread_y_dim - 1);
 }
 
 inline int World::local_bin_x_of_particle(particle_t* particle) {
+	// NOT IN USE
+	exit(1);
 	return global_bin_x_of_particle(particle) % max_x_bins;
 }
 
 inline int World::local_bin_y_of_particle(particle_t* particle) {
+	// NOT IN USE
+	exit(1);
 	return global_bin_y_of_particle(particle) % max_y_bins;
 }
 
@@ -40,6 +46,8 @@ int World::cpu_of_particle_ui(particle_t* particle) {
 }
 
 inline int World::local_bin_of_particle(particle_t* particle) {
+	// NOT IN USE
+	exit(1);
 	return local_bin_y_of_particle(particle) * bin_x_count + local_bin_x_of_particle(particle);
 }
 
@@ -61,15 +69,34 @@ inline int World::cpu_of_cpu(int x, int y) {
 }
 
 inline int World::cpu_of_bin(int x, int y) {
-	int cpu_x = x / max_x_bins;
-	int cpu_y = y / max_y_bins;
-	return cpu_y * thread_x_dim + cpu_x;
+	return target_cpu_table[bin_of_bin(x,y)];
+
+//	int cpu_x = min(x / max_x_bins, thread_x_dim - 1);
+//	int cpu_y = min(y / max_y_bins, thread_y_dim - 1);
+//	return cpu_y * thread_x_dim + cpu_x;
+}
+
+inline int World::cpu_of_bin_calc(int x, int y) {
+  int cpu_x = min(x / max_x_bins, thread_x_dim - 1);
+  int cpu_y = min(y / max_y_bins, thread_y_dim - 1);
+  return cpu_y * thread_x_dim + cpu_x;
+}
+
+inline int World::cpu_x_of_bin_x(int x) {
+	return min(x / max_x_bins, thread_x_dim - 1);
+}
+
+inline int World::cpu_y_of_bin_y(int y) {
+	return min(y / max_y_bins, thread_y_dim - 1);
 }
 
 int World::cpu_of_bin_ui(int x, int y) {
-  int cpu_x = x / max_x_bins;
-  int cpu_y = y / max_y_bins;
-  return cpu_y * thread_x_dim + cpu_x;
+	return target_cpu_table[bin_of_bin(x,y)];
+
+
+//  int cpu_x = min(x / max_x_bins, thread_x_dim - 1);
+//  int cpu_y = min(y / max_y_bins, thread_x_dim - 1);
+//  return cpu_y * thread_x_dim + cpu_x;
 }
 
 inline void World::setup_thread() {
@@ -77,19 +104,37 @@ inline void World::setup_thread() {
 	my_rank_y = my_rank / thread_x_dim;
 	my_rank_x = my_rank % thread_x_dim;
 
-	max_x_bins = ceil(((float) _nx) / thread_x_dim);
-	max_y_bins = ceil(((float) _ny) / thread_y_dim);
+	max_x_bins = floor(((float) _nx) / thread_x_dim);
+	max_y_bins = floor(((float) _ny) / thread_y_dim);
 
 	bin_x_min = my_rank_x * max_x_bins;
-	bin_x_max = min((my_rank_x + 1) * max_x_bins, _nx);
+	if (my_rank_x == thread_x_dim - 1) {
+		bin_x_max = _nx;
+	}
+	else {
+		bin_x_max = min((my_rank_x + 1) * max_x_bins, _nx);
+	}
+
   bin_y_min = my_rank_y * max_y_bins;
-  bin_y_max = min((my_rank_y + 1) * max_y_bins, _ny);
+	if (my_rank_y == thread_y_dim - 1) {
+		bin_y_max = _ny;
+	}
+	else {
+	  bin_y_max = min((my_rank_y + 1) * max_y_bins, _ny);
+	}
 
 	bin_x_count = bin_x_max - bin_x_min;
 	bin_y_count = bin_y_max - bin_y_min;
 	bin_count = bin_y_count * bin_x_count;
 
 	global_bin_count = _nx * _ny;
+
+	target_cpu_table = new int[_nx*_ny];
+	for (int x = 0; x < _nx; ++x) {
+		for (int y = 0; y < _ny; ++y) {
+			target_cpu_table[bin_of_bin(x,y)] = cpu_of_bin_calc(x, y);
+		}
+	}
 
 	thread_bin_x_min = new int[thread_x_dim];
 	thread_bin_y_min = new int[thread_y_dim];
@@ -100,11 +145,13 @@ inline void World::setup_thread() {
 		thread_bin_x_min[x] = x * max_x_bins;
 		thread_bin_x_max[x] = min((x + 1) * max_x_bins, _nx);
 	}
+	thread_bin_x_max[thread_x_dim - 1] = _nx;
 
 	for (int y = 0; y < thread_y_dim; ++y) {
 	  thread_bin_y_min[y] = y * max_y_bins;
 		thread_bin_y_max[y] = min((y + 1) * max_y_bins, _ny);
 	}
+	thread_bin_y_max[thread_y_dim - 1] = _ny;
 
 	count_neighbors = 0;
 	if (my_rank_x > 0) {
@@ -133,7 +180,7 @@ inline void World::setup_thread() {
 			}
 			ghost_bin_table[bin_of_bin(x, y)][4] = 1;
 
-			ghost_bin_table[bin_of_bin(x, y)][0] = (y / max_y_bins) * thread_x_dim + (x / max_x_bins);
+			ghost_bin_table[bin_of_bin(x, y)][0] = cpu_of_bin(x, y); //(y / max_y_bins) * thread_x_dim + (x / max_x_bins);
 		}
 	}
 
@@ -229,8 +276,8 @@ World::World(double size, int nx, int ny, int np, int n, particle_t* particles, 
                 bins[binID].I = i;
                 bins[binID].J = j;
 								bins[binID].my_rank = cpu_of_bin(i, j);
-								bins[binID].my_rank_x = i / max_x_bins;
-								bins[binID].my_rank_y = j / max_y_bins;
+								bins[binID].my_rank_x = cpu_x_of_bin_x(i); //i / max_x_bins;
+								bins[binID].my_rank_y = cpu_y_of_bin_y(j); //j / max_y_bins;
                 bins[binID].world = this;
             }
 	}

@@ -93,10 +93,10 @@ int main( int argc, char **argv )
       ny++;
     }
 
-		if (px*3 > nx || py*3 > ny) {
-			cout << "Invalid configuration: ensure that px*3 <= M and py*2 <= M." << endl;
-			ABEND();
-		}
+		//if (px*3 > nx || py*3 > ny) {
+		//	cout << "Invalid configuration: ensure that px*3 <= M and py*2 <= M." << endl;
+		//	ABEND();
+		//}
 
     int nprocs=1, myrank=0;
 #ifdef _MPI_

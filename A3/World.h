@@ -22,6 +22,9 @@ public:
 	void send_ghost_particles();
 	void clear_ghost_particles();
 
+	int cpu_of_bin_calc(int x, int y);
+	int cpu_x_of_bin_x(int x);
+	int cpu_y_of_bin_y(int y);
 	int cpu_x_of_particle(particle_t* particle);
 	int cpu_y_of_particle(particle_t* particle);
 	int local_bin_x_of_particle(particle_t* particle);
