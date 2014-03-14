@@ -136,7 +136,9 @@ int main( int argc, char **argv )
 			world.startup = false;
 
 			MPI_Barrier(MPI_COMM_WORLD);
-			delete [ ] particles;
+			if (!nplot) {
+				delete [ ] particles;
+			}
 		}
 		else {
 			world.startup = false;
@@ -147,7 +149,7 @@ int main( int argc, char **argv )
 
     double uMax, vMax, uL2, vL2;
     Plotter *plotter = NULL;
-    if (nplot){
+    if (nplot && !myrank){
         plotter = new Plotter();
         assert(plotter);
         VelNorms(particles,n,uMax, vMax, uL2, vL2);

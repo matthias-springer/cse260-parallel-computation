@@ -12,6 +12,9 @@
 #include <math.h>
 #include <unistd.h>
 
+extern particle_t * particles;
+int nnplot;
+
 inline int World::cpu_x_of_particle(particle_t* particle) {
 	return global_bin_x_of_particle(particle) / max_x_bins;
 }
@@ -341,14 +344,20 @@ void World::receive_particles(int cpus) {
 
     // put partices into memory and bins
     for (int i = 0; i < buffer.size; i++) {
-      particle_t * particle =  new particle_t; //buffer.particles + i;
-      memcpy(particle, buffer.particles + i, sizeof(particle_t));
+	  if (status.MPI_TAG == 1 && nnplot && my_rank == 0) {
+		memcpy(particles + (buffer.particles + i)->tag, buffer.particles + i, sizeof(particle_t));
+		}
+		else {
+			particle_t * particle =  new particle_t; //buffer.particles + i;
+			memcpy(particle, buffer.particles + i, sizeof(particle_t));
+	  
+			int index_i = (int) (particle->x / binWidth);
+			int index_j  = (int) (particle->y / binHeight);
+			int newBin = index_j*_nx + index_i;
 
-      int index_i = (int) (particle->x / binWidth);
-      int index_j  = (int) (particle->y / binHeight);
-      int newBin = index_j*_nx + index_i;
+			bins[newBin].AddParticle(particle);
+		}
 
-      bins[newBin].AddParticle(particle);
     }
 
     if (buffer.size < BUFFER_SIZE) {
@@ -423,6 +432,7 @@ void World::move_particles(double dt)
     cout << "particle count = " << particleCount << endl;
 #endif
 }
+int send_tag = 0;
 
 void World::send_particle(particle_t* particle, int target) {
 		if (target == my_rank) {
@@ -448,7 +458,7 @@ void World::send_particle(particle_t* particle, int target) {
     if (target_buffer->size == BUFFER_SIZE) {
       MPI_Request request;
 
-      MPI_Isend(target_buffer, sizeof(send_buffer), MPI_BYTE, target, 0, MPI_COMM_WORLD, &request);
+      MPI_Isend(target_buffer, sizeof(send_buffer), MPI_BYTE, target, send_tag, MPI_COMM_WORLD, &request);
       send_buffer_index[target] = next_send_buffer++;
     }
 }
@@ -459,7 +469,7 @@ inline void World::flush_send_buffer(int buffer) {
     MPI_Request request;
     send_buffer* target_buffer = send_buffers + send_buffer_index[buffer];
 
-    MPI_Isend(target_buffer, sizeof(int) + sizeof(particle_t) * target_buffer->size, MPI_BYTE, buffer, 0, MPI_COMM_WORLD, &request);
+    MPI_Isend(target_buffer, sizeof(int) + sizeof(particle_t) * target_buffer->size, MPI_BYTE, buffer, send_tag, MPI_COMM_WORLD, &request);
 }
 
 void World::check_send_ghost_particle(particle_t* particle, int bin_x, int bin_y) {
@@ -611,7 +621,9 @@ void World::output_particle_stats() {
 }
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
-    for( int step = 0; step < nsteps; step++ ) {
+	nnplot = nplot;
+	
+   for( int step = 0; step < nsteps; step++ ) {
 	//		printf("%i\n", step);
 
 	//		output_particle_stats();
@@ -639,14 +651,36 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	MPI_Barrier(MPI_COMM_WORLD);
 	reset_buffers();
 
-	if (nplot && ((step % nplot ) == 0)){
-
-	// Computes the absolute maximum velocity
-	// TODO: send and compute 
-	//    VelNorms(particles,n,uMax,vMax,uL2,vL2);
-	//    plotter->updatePlot(particles,n,step,uMax,vMax,uL2,vL2);
+	if (nplot) {
+		// send it over
+		if (my_rank == 0) {
+			receive_moving_particles();
+			for (int x = bin_x_min; x < bin_x_max; ++x) {
+				for (int y = bin_y_min; y < bin_y_max; ++y) {
+					for(int z = 0; z < bins[bin_of_bin(x,y)].binParticles.size(); z++){
+						particles[bins[bin_of_bin(x,y)].binParticles[z]->tag] = *bins[bin_of_bin(x,y)].binParticles[z];
+					}
+				}
+			}
+		}
+		else {
+			send_tag = 1;
+			for (int x = bin_x_min; x < bin_x_max; ++x) {
+				for (int y = bin_y_min; y < bin_y_max; ++y) {
+					bins[bin_of_bin(x,y)].send_as_ghost(0);
+				}
+			}
+			
+			flush_send_buffer(0);
+			send_tag = 0;
+		}
+		
+			
+		MPI_Barrier(MPI_COMM_WORLD);
+		reset_buffers();
 	}
 
+	
 //
 // Might come in handy when debugging
 // prints out summary statistics every time step
@@ -656,10 +690,16 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
     //
     //  if we asked, save to a file every savefreq timesteps
     //
-	if( fsave && (step%SAVEFREQ) == 0 ) {
+	if( fsave && (step%SAVEFREQ) == 0 && !my_rank ) {
 			// TODO: send and compute
-	    //save( fsave, n, particles );
+	    save( fsave, n, particles );
 	}
+	
+	if (nplot && !my_rank && ((step % nplot ) == 0)){
+       VelNorms(particles,n,uMax, vMax, uL2, vL2);
+	   plotter->updatePlot(particles,n,step,uMax,vMax,uL2,vL2);
+	}
+	
   }
 
 	double uL2_local = 0;
@@ -683,6 +723,7 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 			}
 		}
 	}
+	
 
 	MPI_Reduce(&uL2_local, &uL2 , 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce(&vL2_local, &vL2 , 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -691,34 +732,12 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	MPI_Reduce(&uMax_local, &uMax , 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 	Norms(n, uL2, vL2);
+	
+	
+	
 
 	return;
-	reset_buffers();
 
-
-	if (my_rank == 0) {
-		// receive
-		for (int x = 0; x < _nx; ++x) {
-			for (int y = 0; y < _ny; ++y) {
-				if (x < bin_x_max && y < bin_y_max) continue;
-				bins[bin_of_bin(x, y)].binParticles.clear();
-			}
-		}
-
-		receive_moving_particles();
-	}
-	else {
-		for (int x = bin_x_min; x < bin_x_max; ++x) {
-			for (int y = bin_y_min; y <  bin_y_max; ++y) {
-				int bin_index = bin_of_bin(x, y);
-				bins[bin_index].send_as_ghost(0);
-			}
-		}
-
-		flush_send_buffers();
-	}
-
-	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 
