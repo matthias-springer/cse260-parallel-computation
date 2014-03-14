@@ -331,7 +331,6 @@ void World::reset_buffers() {
 	next_send_buffer = thread_count;
 }
 
-int ctr=0;
 void World::receive_particles(int cpus) {
   int non_full_buffers = 0;
   send_buffer buffer;
@@ -350,7 +349,6 @@ void World::receive_particles(int cpus) {
       int newBin = index_j*_nx + index_i;
 
       bins[newBin].AddParticle(particle);
-			ctr++;
     }
 
     if (buffer.size < BUFFER_SIZE) {
@@ -426,7 +424,6 @@ void World::move_particles(double dt)
 #endif
 }
 
-int startup_ctr=0;
 void World::send_particle(particle_t* particle, int target) {
 		if (target == my_rank) {
 			// send to ourselves
@@ -438,7 +435,6 @@ void World::send_particle(particle_t* particle, int target) {
 				particle_t * part = new particle_t;
 				memcpy(part, particle, sizeof(particle_t));
 				bins[newBin].AddParticle(part);
-				startup_ctr++;
 			}
 			else {
 				bins[newBin].AddParticle(particle);
@@ -615,7 +611,6 @@ void World::output_particle_stats() {
 }
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
-		printf("Received %i %i\n", ctr, startup_ctr);
     for( int step = 0; step < nsteps; step++ ) {
 	//		printf("%i\n", step);
 
@@ -671,7 +666,6 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 	double vL2_local = 0;
 	double vMax_local = -1e10;
 	double uMax_local = -1e10;
-	int ctr= 0;
 
 	for (int x = bin_x_min; x < bin_x_max; ++x) {
 		for (int y = bin_y_min; y < bin_y_max; ++y) {
@@ -686,12 +680,10 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 
 				uL2_local += vx*vx;
 				vL2_local += vy*vy;
-				ctr++;
 			}
 		}
 	}
 
-	printf("have %i elements\n", ctr);
 	MPI_Reduce(&uL2_local, &uL2 , 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce(&vL2_local, &vL2 , 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 

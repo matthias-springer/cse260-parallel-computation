@@ -47,6 +47,7 @@ public:
 	void setup_thread();
 
 	bool startup;	
+	bool outputWrong;
 	Bin* bins; // bins inside the world
 	int binCount; // number of bins
 	double _size; 

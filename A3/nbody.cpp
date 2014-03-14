@@ -122,7 +122,7 @@ int main( int argc, char **argv )
 
 		World world(size, nx, ny, nt, n, particles, myrank, nprocs, px, py);
 		MPI_Barrier(MPI_COMM_WORLD);
-
+	
 		if (myrank == 0) {
 		  assert(particles); 
 			init_particles(n, particles, sd);
@@ -143,7 +143,7 @@ int main( int argc, char **argv )
 			world.receive_particles(2);
 			MPI_Barrier(MPI_COMM_WORLD);
 		}
-
+		world.reset_buffers();
 
     double uMax, vMax, uL2, vL2;
     Plotter *plotter = NULL;
