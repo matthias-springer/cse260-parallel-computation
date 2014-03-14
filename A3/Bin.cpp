@@ -155,6 +155,14 @@ void Bin::UpdateParticlesBin()
 	}
 }
 
+void Bin::binParticlesP_clear() {
+	for (int i = 0; i < binParticles.size(); ++i) {
+		delete binParticles[i];
+	}
+
+	binParticles.clear();
+}
+
 //
 // After we've updated all the inbound lists
 // We then make a new pass, incorporating into this bin,

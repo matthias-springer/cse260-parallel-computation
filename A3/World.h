@@ -27,10 +27,13 @@ public:
 	int local_bin_x_of_particle(particle_t* particle);
 	int local_bin_y_of_particle(particle_t* particle);
 	int cpu_of_particle(particle_t* particle);
+	int cpu_of_particle_ui(particle_t* particle);
 	int local_bin_of_particle(particle_t* particle);
 	int global_bin_x_of_particle(particle_t* particle);
 	int global_bin_y_of_particle(particle_t* particle);
 	int cpu_of_bin(int x, int y);
+	int cpu_of_bin_ui(int x, int y);
+
 	int bin_of_bin(int x, int y);
 	int cpu_of_cpu(int x, int y);
 	void send_particle(particle_t* particle, int target);
@@ -42,7 +45,8 @@ public:
 	void output_particle_stats();
 	void receive_moving_particles_from_neighbors();
 	void setup_thread();
-	
+
+	bool startup;	
 	Bin* bins; // bins inside the world
 	int binCount; // number of bins
 	double _size; 

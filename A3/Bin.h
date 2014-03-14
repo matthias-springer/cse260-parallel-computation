@@ -46,6 +46,7 @@ public:
   void UpdateParticlesBin();
   void UpdateInboundParticles();
 	void send_as_ghost(int target);
+	void binParticlesP_clear();
 };
 
 

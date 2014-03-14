@@ -7,6 +7,7 @@
 #include "common.h"
 #include "Plotting.h"
 #include "World.h"
+#include "Bin.h"
        #include <sys/types.h>
        #include <unistd.h>
 
@@ -16,7 +17,6 @@
 #endif
 
 using namespace std;
-
 
 // This is how to conditionally compile for OpenMP
 #ifdef  _OPENMP
@@ -113,10 +113,38 @@ int main( int argc, char **argv )
         fsave = savename ? fopen( savename, "w" ) : NULL;
     }
 
-    particles = new particle_t[ n ];
-    assert(particles);
-    
-    init_particles( n, particles,sd);
+		if (myrank == 0) {
+	    particles = new particle_t[ n ];
+		}
+		else {
+			particles = NULL;
+		}
+
+		World world(size, nx, ny, nt, n, particles, myrank, nprocs, px, py);
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (myrank == 0) {
+		  assert(particles); 
+			init_particles(n, particles, sd);
+			world.startup = true;
+	
+			for (int i = 0; i < n; ++i) {
+				world.send_particle(&particles[i], world.cpu_of_particle_ui(&particles[i]));
+			}
+
+			world.flush_send_buffers();
+			world.startup = false;
+
+			MPI_Barrier(MPI_COMM_WORLD);
+			delete [ ] particles;
+		}
+		else {
+			world.startup = false;
+			world.receive_particles(2);
+			MPI_Barrier(MPI_COMM_WORLD);
+		}
+
+
     double uMax, vMax, uL2, vL2;
     Plotter *plotter = NULL;
     if (nplot){
@@ -137,12 +165,6 @@ int main( int argc, char **argv )
     }
 #endif
     //
-    // Bin the particles into nx by ny regions
-    //
-		//printf("Creating world on rank %i\n", myrank);
-    World world(size, nx, ny, nt, n, particles, myrank, nprocs, px, py);
-  
-    //
     //  simulate a number of time steps
     //
     double simulation_time = read_timer( );
@@ -153,7 +175,7 @@ int main( int argc, char **argv )
         cout << endl;
         cout <<  "n = " << n << ", nsteps = " << nsteps << endl;
     }
-    VelNorms(particles,n,uMax,vMax,uL2,vL2);
+    //VelNorms(particles,n,uMax,vMax,uL2,vL2);
 		
 		if (!myrank)
 	    RepNorms(uMax,vMax,uL2,vL2);
@@ -172,7 +194,7 @@ int main( int argc, char **argv )
         if (nplot)
             delete plotter;
     }
-    delete [ ] particles;
+    //delete [ ] particles;
 
 #ifdef _MPI_
     MPI_Finalize();

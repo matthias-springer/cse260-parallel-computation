@@ -12,8 +12,6 @@
 #include <math.h>
 #include <unistd.h>
 
-extern particle_t * particles;
-
 inline int World::cpu_x_of_particle(particle_t* particle) {
 	return global_bin_x_of_particle(particle) / max_x_bins;
 }
@@ -32,6 +30,10 @@ inline int World::local_bin_y_of_particle(particle_t* particle) {
 
 inline int World::cpu_of_particle(particle_t* particle) {
 	return cpu_y_of_particle(particle) * thread_x_dim + cpu_x_of_particle(particle);
+}
+
+int World::cpu_of_particle_ui(particle_t* particle) {
+  return cpu_y_of_particle(particle) * thread_x_dim + cpu_x_of_particle(particle);
 }
 
 inline int World::local_bin_of_particle(particle_t* particle) {
@@ -59,6 +61,12 @@ inline int World::cpu_of_bin(int x, int y) {
 	int cpu_x = x / max_x_bins;
 	int cpu_y = y / max_y_bins;
 	return cpu_y * thread_x_dim + cpu_x;
+}
+
+int World::cpu_of_bin_ui(int x, int y) {
+  int cpu_x = x / max_x_bins;
+  int cpu_y = y / max_y_bins;
+  return cpu_y * thread_x_dim + cpu_x;
 }
 
 inline void World::setup_thread() {
@@ -223,11 +231,11 @@ World::World(double size, int nx, int ny, int np, int n, particle_t* particles, 
                 bins[binID].world = this;
             }
 	}
-	SortParticles(n, particles);
+	/*SortParticles(n, particles);
 
 	for (int i = 0; i < n; i++) {
 		(particles + i)->tag = i;
-	}
+	}*/
 
 	num_buffers = (int) ceil(((float) n) / BUFFER_SIZE) + num_threads;
 	num_buffers *= 4;	// TODO: think about this
@@ -250,6 +258,9 @@ void World::SortParticles(int n, particle_t* particles)
             int i = (int) (particles[p].x / binWidth);
             int j  = (int) (particles[p].y / binHeight);
             int binID = j* _nx + i;
+
+//						particle_t *part = new particle_t;
+//						memcpy(part, &particles[p], sizeof(particle_t));
 
             bins[binID].AddParticle(&particles[p]);
 	}
@@ -320,6 +331,7 @@ void World::reset_buffers() {
 	next_send_buffer = thread_count;
 }
 
+int ctr=0;
 void World::receive_particles(int cpus) {
   int non_full_buffers = 0;
   send_buffer buffer;
@@ -330,14 +342,15 @@ void World::receive_particles(int cpus) {
 
     // put partices into memory and bins
     for (int i = 0; i < buffer.size; i++) {
-      particle_t * particle =  buffer.particles + i;
-      memcpy(particles + buffer.particles[i].tag, particle, sizeof(particle_t));
+      particle_t * particle =  new particle_t; //buffer.particles + i;
+      memcpy(particle, buffer.particles + i, sizeof(particle_t));
 
       int index_i = (int) (particle->x / binWidth);
       int index_j  = (int) (particle->y / binHeight);
       int newBin = index_j*_nx + index_i;
 
-      bins[newBin].AddParticle(particles + buffer.particles[i].tag);
+      bins[newBin].AddParticle(particle);
+			ctr++;
     }
 
     if (buffer.size < BUFFER_SIZE) {
@@ -413,7 +426,7 @@ void World::move_particles(double dt)
 #endif
 }
 
-
+int startup_ctr=0;
 void World::send_particle(particle_t* particle, int target) {
 		if (target == my_rank) {
 			// send to ourselves
@@ -421,7 +434,15 @@ void World::send_particle(particle_t* particle, int target) {
       int index_j  = (int) (particle->y / binHeight);
       int newBin = index_j*_nx + index_i;
 
-      bins[newBin].AddParticle(particle);
+			if (startup) {
+				particle_t * part = new particle_t;
+				memcpy(part, particle, sizeof(particle_t));
+				bins[newBin].AddParticle(part);
+				startup_ctr++;
+			}
+			else {
+				bins[newBin].AddParticle(particle);
+			}
 			return;
 		}
 
@@ -446,13 +467,19 @@ inline void World::flush_send_buffer(int buffer) {
 }
 
 void World::check_send_ghost_particle(particle_t* particle, int bin_x, int bin_y) {
+	bool sent_to_self = false;
+
 	for (int i = 0; i < 4; ++i) {
 		int target_rank = ghost_bin_table[bin_of_bin(bin_x, bin_y)][i];
 		
 		if (target_rank != -1) {
 			send_particle(particle, target_rank);
+
+			if (target_rank == my_rank) sent_to_self = true;
 		}
 	}
+
+	if (!sent_to_self) delete particle;
 
 /*
 	return; 
@@ -551,12 +578,12 @@ void World::clear_ghost_particles() {
 	for (int x = -1; x < bin_x_count + 1; ++x) {
 		int bin_index = bin_of_bin(x + bin_x_min, bin_y_min - 1);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
-			bins[bin_index].binParticles.clear();
+			bins[bin_index].binParticlesP_clear();
 		}
 
 		bin_index = bin_of_bin(x + bin_x_min, bin_y_max);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
-			bins[bin_index].binParticles.clear();
+			bins[bin_index].binParticlesP_clear();
 		}
 
 	}
@@ -564,13 +591,13 @@ void World::clear_ghost_particles() {
 	for (int y = -1; y < bin_y_count + 1; ++y) {
 		int bin_index = bin_of_bin(bin_x_min - 1, y + bin_y_min);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
-			bins[bin_index].binParticles.clear();
+			bins[bin_index].binParticlesP_clear();
 		}
 
 
 		bin_index = bin_of_bin(bin_x_max, y + bin_y_min);
 		if (bin_index >= 0 && bin_index < global_bin_count) {
-			bins[bin_index].binParticles.clear();
+			bins[bin_index].binParticlesP_clear();
 		}
 	}
 }
@@ -588,6 +615,7 @@ void World::output_particle_stats() {
 }
 
 void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt,  int nplot, double &uMax, double &vMax, double &uL2, double &vL2, Plotter *plotter, FILE *fsave, int nx, int ny, double dt ){
+		printf("Received %i %i\n", ctr, startup_ctr);
     for( int step = 0; step < nsteps; step++ ) {
 	//		printf("%i\n", step);
 
@@ -618,9 +646,10 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
 
 	if (nplot && ((step % nplot ) == 0)){
 
-	// Computes the absolute maximum velocity 
-	    VelNorms(particles,n,uMax,vMax,uL2,vL2);
-	    plotter->updatePlot(particles,n,step,uMax,vMax,uL2,vL2);
+	// Computes the absolute maximum velocity
+	// TODO: send and compute 
+	//    VelNorms(particles,n,uMax,vMax,uL2,vL2);
+	//    plotter->updatePlot(particles,n,step,uMax,vMax,uL2,vL2);
 	}
 
 //
@@ -633,10 +662,45 @@ void World::SimulateParticles(int nsteps, particle_t* particles, int n, int nt, 
     //  if we asked, save to a file every savefreq timesteps
     //
 	if( fsave && (step%SAVEFREQ) == 0 ) {
-	    save( fsave, n, particles );
+			// TODO: send and compute
+	    //save( fsave, n, particles );
 	}
   }
 
+	double uL2_local = 0;
+	double vL2_local = 0;
+	double vMax_local = -1e10;
+	double uMax_local = -1e10;
+	int ctr= 0;
+
+	for (int x = bin_x_min; x < bin_x_max; ++x) {
+		for (int y = bin_y_min; y < bin_y_max; ++y) {
+			Bin* bin = &bins[bin_of_bin(x, y)];
+
+			for (int i = 0; i < bin->binParticles.size(); ++i) {
+				particle_t* particle = bin->binParticles[i];
+				double vx = fabs(particle->vx);
+				double vy = fabs(particle->vy);
+				uMax_local = fmax(uMax_local, vx);
+				vMax_local = fmax(vMax_local, vy);
+
+				uL2_local += vx*vx;
+				vL2_local += vy*vy;
+				ctr++;
+			}
+		}
+	}
+
+	printf("have %i elements\n", ctr);
+	MPI_Reduce(&uL2_local, &uL2 , 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&vL2_local, &vL2 , 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	MPI_Reduce(&vMax_local, &vMax , 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&uMax_local, &uMax , 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+	Norms(n, uL2, vL2);
+
+	return;
 	reset_buffers();
 
 
