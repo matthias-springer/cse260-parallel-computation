@@ -1,0 +1,60 @@
+                    CSE 260, Parallel Computation
+                                (Winter 2014)
+                Department of Computer Science and Engineering 	
+                        University of California, San Diego 	
+
+
+                        Team Self Evaluation Form, Assignment #3
+
+Each team must submit one copy of this self evaluation form. 
+The members of each team should discuss how they
+worked together and what to write for the evaluation.
+
+(1) List the names of your team members:
+
+A: Andrew Conegliano
+
+ 
+B: Matthias Springer
+
+ 
+C:
+
+ 
+(2) Estimate how much time each team member devoted to this project, in HOURS.
+
+  	                        A 	       B              C
+meetings 	  	  	          60         60
+coding 	  	  	            40         40
+writeup 	  	  	          20          20
+planning (alone) 	  	  	  0          0
+total (including meetings) 	60         60
+
+
+(3) Describe 
+(a) what the major responsibilities of each team member were;
+We implemented all stuff together during meetings. Therefore, the time for
+meetings is the same as for coding and writeup. We did pair programming most
+of the time except for certain phases of the project, where we tried different
+approaches in parallel separately (in order to gain 2x parallel speedup).
+
+(b) whether or not you completed the assignment;
+Yes. We completed all tasks that were supposed to be done by groups of 2.
+
+(c) the major strengths and weaknesses in your team, e.g. how
+    your team worked together;
+We always worked together during meetings. The good thing about that was
+that we spent less time debugging because if one of us made an error, the
+other guy usually saw it quickly.
+
+(d) the lessons learned from these events;
+We learned how to use MPI and GDB with multiple threads.
+
+(e) whether and how you plan to change the way your work together and
+We will keep working like this since it worked pretty good for us.
+
+(f) anything else that comes to mind.
+Be more specific on the assignment (e.g. what exact numbers (speed) do we have
+to achieve, ...).
+
+
